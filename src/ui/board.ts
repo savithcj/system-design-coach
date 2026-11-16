@@ -17,7 +17,7 @@ interface Cur { s: State; pos: Record<string, Pt>; nw: number; W: number; H: num
 let cur: Cur = { s: emptyState(), pos: {}, nw: 0, W: 0, H: 0 }
 
 export function boardWidth(): number {
-  return Math.max(260, $('boardWrap').clientWidth - 34)
+  return Math.max(260, $('boardCol').clientWidth)
 }
 
 /* ---------- actions (each one appends events, then the UI re-renders) ---------- */

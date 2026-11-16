@@ -11,6 +11,7 @@
   <header class="top">
     <h1>Design Coach</h1>
     <div id="seg" class="seg" role="radiogroup" aria-label="Problem"></div>
+    <div id="stages" class="stages" role="radiogroup" aria-label="Stage"></div>
     <span class="grow"></span>
     <button id="detailsBtn" class="btn ghost">Details</button>
     <button id="finishBtn" class="btn solid">Finish</button>
@@ -32,7 +33,7 @@
           </div>
           <button id="tidyBtn" class="btn ghost" hidden>Tidy up</button>
         </div>
-        <div class="canvas" id="boardWrap"><div id="board" role="group" aria-label="Your design"></div></div>
+        <div class="canvas" id="boardWrap"><section id="contract" aria-label="Contract notes"></section><div id="boardCol"><div id="board" role="group" aria-label="Your design"></div></div></div>
       </section>
       <div id="splitter" class="splitter" role="separator" aria-orientation="vertical" aria-label="Resize coach panel" tabindex="0"></div>
       <aside class="chat" aria-label="Coach chat">

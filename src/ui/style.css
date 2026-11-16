@@ -159,3 +159,32 @@ path[data-edge]:focus-visible{stroke:var(--accent);stroke-opacity:.22}
 .node:hover+.hs .noteBtn,.node:focus-visible+.hs .noteBtn,.hs:hover .noteBtn,.noteBtn:focus-visible{opacity:1}
 .noteBtn:hover{color:var(--accent);border-color:var(--accent)}
 @media (hover:none){.hs.sel .noteBtn{opacity:1}}
+
+/* stage pill and contract notes (Milestone 1): same hairlines, soft fills and muted type as the rest */
+.stages{display:inline-flex;gap:2px;flex-wrap:wrap}
+.stages button{font:inherit;font-size:13px;font-weight:500;color:var(--muted);background:transparent;border:0;border-radius:7px;padding:5px 9px;min-height:30px;cursor:pointer;white-space:nowrap;display:inline-flex;gap:6px;align-items:baseline}
+.stages button:hover{background:var(--soft)}
+.stages button[aria-checked=true]{color:var(--ink);background:var(--soft)}
+.stages .sn{font-size:11px;opacity:.7}
+.stagetime{font-size:12px;font-weight:400;font-variant-numeric:tabular-nums;color:var(--muted)}
+@media (pointer:coarse){.stages button{min-height:40px}}
+@media (max-width:899px){.top .stages{order:6;width:100%}}
+
+.canvas{display:flex;gap:16px;align-items:flex-start}
+#boardCol{flex:1;min-width:0;align-self:stretch;border:1px solid transparent;border-radius:10px}
+#contract{flex:none;width:240px;display:flex;flex-direction:column;gap:6px}
+.cblock{border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.chead{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;font:inherit;font-size:13px;font-weight:500;color:var(--ink);background:transparent;border:0;border-radius:10px;padding:6px 10px;min-height:34px;cursor:pointer;text-align:left}
+.chead:hover{background:var(--soft)}
+.chead::after{content:"";flex:none;width:6px;height:6px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:rotate(45deg);transition:transform .12s;margin-right:2px}
+.chead[aria-expanded=true]::after{transform:rotate(-135deg)}
+.cnote{display:block;width:calc(100% - 16px);margin:0 8px 8px;min-height:104px;resize:vertical;font:inherit;font-size:13px;line-height:1.5;color:var(--ink);background:var(--bg);border:1px solid var(--line2);border-radius:8px;padding:7px 9px}
+/* the zone of the current stage, softly: a tinted hairline, nothing is hidden */
+.cblock.zone,#boardCol.zone{border-color:color-mix(in srgb,var(--accent) 50%,var(--line))}
+@media (max-width:899px){.canvas{flex-direction:column}#contract{width:100%}#boardCol{align-self:auto;width:100%}}
+
+.paper h4{font-size:15px;margin:14px 0 4px}
+.paper table.pace{border-collapse:collapse;font-size:14px}
+.paper table.pace th,.paper table.pace td{text-align:left;font-weight:400;padding:2px 18px 2px 0}
+.paper table.pace thead th{font-weight:600;border-bottom:1px solid #ddd}
+.sr-h{margin:0;font-size:inherit;font-weight:inherit}

@@ -2,6 +2,8 @@ import { append, nextSeq, type Actor, type KnownType, type LogEvent, type Payloa
 import { reduce } from '../core/reduce'
 import type { State } from '../core/state'
 import { problemById } from '../problems'
+import type { ContractBlock } from '../core/events'
+import { CONTRACT_BLOCKS, STAGES } from '../core/stages'
 
 /** UI-only state. Selection, editing and connect mode are never events. */
 export const ui = {
@@ -14,6 +16,8 @@ export const ui = {
   connectFrom: null as string | null,
   connectPort: null as string | null,
   reportOpen: false,
+  /** Which contract blocks are expanded. UI state, per session view; never an event. */
+  open: { functional: true, nonfunctional: true, entities: false, api: false } as Record<ContractBlock, boolean>,
   /** Element to focus after the next render: a node id, 'NAME' (the rename field) or 'ADD'. */
   pendingFocus: null as string | null,
 }
@@ -54,6 +58,11 @@ export function resetSelection(): void {
   ui.sel = null; ui.selEdge = null; ui.editing = false; ui.editingEdge = null; ui.editingNote = null; ui.connectFrom = null; ui.connectPort = null
 }
 
+/** Expand the blocks of a stage (others stay as the learner left them). */
+export function openStageBlocks(stage: number): void {
+  for (const b of STAGES[stage - 1]?.blocks ?? []) ui.open[b] = true
+}
+
 export function loadProblem(id: string, fresh = false): void {
   if (currentId) sessions[currentId] = log
   currentId = id
@@ -67,6 +76,9 @@ export function loadProblem(id: string, fresh = false): void {
   }
   resetSelection()
   ui.reportOpen = false
+  // Collapsed by default except the current stage's blocks.
+  for (const b of CONTRACT_BLOCKS) ui.open[b] = false
+  openStageBlocks(getState().stage)
   token++
   render()
 }

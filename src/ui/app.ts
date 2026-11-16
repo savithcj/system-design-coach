@@ -1,6 +1,8 @@
 import { PROBLEMS, problemById } from '../problems'
 import { $, syncRove } from './dom'
 import { initBoard, renderBoard } from './board'
+import { initContract, syncContract } from './contract'
+import { initStages, syncStages } from './stages'
 import { initChat, renderChat } from './chat'
 import { initDetails, renderDetails } from './details'
 import { initReport, renderReport } from './report'
@@ -15,6 +17,7 @@ function render(): void {
   $('finishBtn').hidden = ui.reportOpen
   $('prompt').textContent = problemById(s.problemId).prompt
   syncSeg(s.problemId)
+  syncStages(); syncContract(s)
   $('tidyBtn').hidden = s.nodes.length < 2 || !s.edges.length
   syncRove($('toolbar'), '.btn')
   if (ui.reportOpen) { renderReport(); return }
@@ -39,6 +42,6 @@ function render(): void {
 
 export function startApp(): void {
   setRenderer(render)
-  initTopbar(); initBoard(); initChat(); initDetails(); initReport(); initResizer()
+  initTopbar(); initStages(); initContract(); initBoard(); initChat(); initDetails(); initReport(); initResizer()
   loadProblem(PROBLEMS[0]!.id)
 }
