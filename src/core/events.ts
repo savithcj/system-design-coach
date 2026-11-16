@@ -2,6 +2,7 @@ import type { Role } from './roles'
 
 export type Actor = 'user' | 'coach' | 'system'
 export type Port = 't' | 'r' | 'b' | 'l'
+export type ContractBlock = 'functional' | 'nonfunctional' | 'entities' | 'api'
 
 /** Payloads of the events this build knows. Milestone-1 events are added to this map as their steps land. */
 export interface PayloadMap {
@@ -14,6 +15,10 @@ export interface PayloadMap {
   EdgeAdded: { id: string; a: string; b: string; pa?: Port; pb?: Port }
   EdgeDeleted: { id: string }
   LayoutReset: { pos: Record<string, { fx: number; y: number }> }
+  /** The stage the learner (or, later, the coach) is working in: 1 Requirements .. 5 Deep dives. */
+  StageChanged: { stage: number }
+  /** Full text of one contract block after an edit (debounced while typing, flushed on blur). Not board-undoable. */
+  ContractNoteUpdated: { block: ContractBlock; text: string }
   EdgeLabeled: { id: string; label: string }
   NodeNoteUpdated: { id: string; text: string }
   /** targetSeq is the first seq of the undone action group (see undo.ts). */

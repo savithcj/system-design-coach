@@ -55,6 +55,14 @@ export function reduce(log: EventLog): State {
       case 'EdgeDeleted':
         s.edges = s.edges.filter((x) => x.id !== e.payload.id)
         break
+      case 'StageChanged': {
+        const n = Math.round(e.payload.stage)
+        if (n >= 1 && n <= 5) s.stage = n
+        break
+      }
+      case 'ContractNoteUpdated':
+        if (e.payload.block in s.contract && typeof e.payload.text === 'string') s.contract[e.payload.block] = e.payload.text
+        break
       case 'EdgeLabeled': {
         const label = e.payload.label.trim()
         for (const x of s.edges) if (x.id === e.payload.id) { if (label) x.label = label; else delete x.label }
