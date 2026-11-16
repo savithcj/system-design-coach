@@ -1,0 +1,68 @@
+import type { EventLog, KnownEvent } from './events'
+import { emptyState, type State } from './state'
+
+/**
+ * State is a pure function of the log. Unknown event types are ignored so older and newer logs still load.
+ * Selection, editing and connect mode are UI state, never events.
+ */
+export function reduce(log: EventLog): State {
+  const s = emptyState()
+  for (const raw of log) {
+    const e = raw as KnownEvent
+    switch (e.type) {
+      case 'ProblemLoaded':
+        s.problemId = e.payload.problemId
+        break
+      case 'NodeAdded': {
+        const p = e.payload
+        const label = p.label.trim()
+        if (!label || s.nodes.some((n) => n.id === p.id)) break
+        s.nodes.push({ id: p.id, role: p.role, label, fx: p.fx, y: p.y })
+        break
+      }
+      case 'NodeMoved':
+        for (const n of s.nodes) if (n.id === e.payload.id) { n.fx = e.payload.fx; n.y = e.payload.y }
+        break
+      case 'LayoutReset':
+        for (const n of s.nodes) {
+          const q = e.payload.pos?.[n.id]
+          if (q) { n.fx = q.fx; n.y = q.y } else { delete n.fx; delete n.y }
+        }
+        break
+      case 'NodeRenamed': {
+        // Older logs wrote the new name as `to`.
+        const p = e.payload as { id: string; label?: string; to?: string }
+        const label = (p.label ?? p.to ?? '').trim()
+        if (!label) break
+        for (const n of s.nodes) if (n.id === p.id) n.label = label
+        break
+      }
+      case 'NodeDeleted':
+        s.nodes = s.nodes.filter((n) => n.id !== e.payload.id)
+        s.edges = s.edges.filter((x) => x.a !== e.payload.id && x.b !== e.payload.id)
+        break
+      case 'EdgeAdded': {
+        const p = e.payload
+        const known = (id: string) => s.nodes.some((n) => n.id === id)
+        // At most one edge per ordered pair; the reverse pair is allowed.
+        if (p.a === p.b || !known(p.a) || !known(p.b) || s.edges.some((x) => x.a === p.a && x.b === p.b)) break
+        s.edges.push({ id: p.id, a: p.a, b: p.b, pa: p.pa, pb: p.pb })
+        break
+      }
+      case 'EdgeDeleted':
+        s.edges = s.edges.filter((x) => x.id !== e.payload.id)
+        break
+      case 'SessionFinished':
+        s.finished = true
+        break
+      default:
+        break
+    }
+  }
+  return s
+}
+
+/** Replay: the state as it was after the event with this seq. */
+export function reduceUpTo(log: EventLog, seq: number): State {
+  return reduce(log.filter((e) => e.seq <= seq))
+}
