@@ -26,17 +26,28 @@ export function autoPorts(a: Pt, b: Pt, nw: number): [Port, Port] {
   return dx >= 0 ? ['r', 'l'] : ['l', 'r']
 }
 
+interface Curve { p1: Pt; c1: Pt; c2: Pt; p2: Pt }
+
 /** Cubic Bézier leaving p1 along n1 and entering p2 along n2 (n2 null while a link is being dragged). */
-export function curveTo(p1: Pt, n1: readonly [number, number], p2: Pt, n2: readonly [number, number] | null): string {
+function curve(p1: Pt, n1: readonly [number, number], p2: Pt, n2: readonly [number, number] | null): Curve {
   const d = Math.hypot(p2.x - p1.x, p2.y - p1.y)
   const k = Math.max(28, Math.min(110, d * 0.42))
-  const c1 = { x: p1.x + n1[0] * k, y: p1.y + n1[1] * k }
-  const c2 = n2 ? { x: p2.x + n2[0] * k, y: p2.y + n2[1] * k } : p2
-  return `M${p1.x} ${p1.y} C${c1.x} ${c1.y} ${c2.x} ${c2.y} ${p2.x} ${p2.y}`
+  return {
+    p1,
+    c1: { x: p1.x + n1[0] * k, y: p1.y + n1[1] * k },
+    c2: n2 ? { x: p2.x + n2[0] * k, y: p2.y + n2[1] * k } : p2,
+    p2,
+  }
 }
 
-/** SVG path for an arrow. `shift` offsets one of two opposite arrows between the same pair (6 px). */
-export function edgePath(a: Pt, b: Pt, nw: number, pa?: Port, pb?: Port, shift = 0): string {
+const toPath = (c: Curve) => `M${c.p1.x} ${c.p1.y} C${c.c1.x} ${c.c1.y} ${c.c2.x} ${c.c2.y} ${c.p2.x} ${c.p2.y}`
+
+export function curveTo(p1: Pt, n1: readonly [number, number], p2: Pt, n2: readonly [number, number] | null): string {
+  return toPath(curve(p1, n1, p2, n2))
+}
+
+/** Curve of an arrow. `shift` offsets one of two opposite arrows between the same pair (6 px). Null if the boxes overlap. */
+function edgeCurve(a: Pt, b: Pt, nw: number, pa?: Port, pb?: Port, shift = 0): Curve | null {
   const auto = autoPorts(a, b, nw)
   const fa = pa ?? auto[0]
   const fb = pb ?? auto[1]
@@ -45,7 +56,7 @@ export function edgePath(a: Pt, b: Pt, nw: number, pa?: Port, pb?: Port, shift =
   const n1 = NORM[fa]
   const n2 = NORM[fb]
   const len = Math.hypot(p2.x - p1.x, p2.y - p1.y)
-  if (len < 2) return ''
+  if (len < 2) return null
   if (shift) {
     const ux = (p2.x - p1.x) / len
     const uy = (p2.y - p1.y) / len
@@ -54,7 +65,20 @@ export function edgePath(a: Pt, b: Pt, nw: number, pa?: Port, pb?: Port, shift =
   }
   // Stop 1.5 px short of the port so the arrowhead tip touches the box edge instead of overlapping it.
   p2 = { x: p2.x + n2[0] * 1.5, y: p2.y + n2[1] * 1.5 }
-  return curveTo(p1, n1, p2, n2)
+  return curve(p1, n1, p2, n2)
+}
+
+/** SVG path for an arrow ('' if the boxes overlap). */
+export function edgePath(a: Pt, b: Pt, nw: number, pa?: Port, pb?: Port, shift = 0): string {
+  const c = edgeCurve(a, b, nw, pa, pb, shift)
+  return c ? toPath(c) : ''
+}
+
+/** Where an arrow's label sits: the middle of its curve. */
+export function edgeLabelPoint(a: Pt, b: Pt, nw: number, pa?: Port, pb?: Port, shift = 0): Pt | null {
+  const c = edgeCurve(a, b, nw, pa, pb, shift)
+  if (!c) return null
+  return { x: (c.p1.x + 3 * c.c1.x + 3 * c.c2.x + c.p2.x) / 8, y: (c.p1.y + 3 * c.c1.y + 3 * c.c2.y + c.p2.y) / 8 }
 }
 
 export interface Snap { id: string; port: Port }

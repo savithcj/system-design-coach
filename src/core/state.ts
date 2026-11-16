@@ -7,6 +7,8 @@ export interface NodeState {
   label: string
   fx?: number
   y?: number
+  /** Compact text note attached beside the box; moves with it. */
+  note?: string
 }
 
 export interface EdgeState {
@@ -15,6 +17,7 @@ export interface EdgeState {
   b: string
   pa?: Port
   pb?: Port
+  label?: string
 }
 
 export interface State {

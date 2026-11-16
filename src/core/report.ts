@@ -18,6 +18,8 @@ export function elapsed(log: EventLog, ts: number): string {
 /** The log as a human timeline. Events marked `silent` (inverse events appended by undo) are skipped. */
 export function narrate(log: EventLog): Step[] {
   const out: Step[] = []
+  const texts = new Map<number, string>()
+  const quote = (s: string) => `"${s}"`
   let before = reduce([])
   log.forEach((raw, i) => {
     const e = raw as KnownEvent
@@ -38,6 +40,25 @@ export function narrate(log: EventLog): Step[] {
           item = { who: 'you', text: `Removed the connection "${ed ? nodeName(before, ed.a) : '?'}" → "${ed ? nodeName(before, ed.b) : '?'}".` }
           break
         }
+        case 'EdgeLabeled': {
+          const ed = before.edges.find((x) => x.id === e.payload.id)
+          const ends = ed ? `${quote(nodeName(before, ed.a))} → ${quote(nodeName(before, ed.b))}` : 'a connection'
+          item = { who: 'you', text: e.payload.label.trim() ? `Labelled the connection ${ends} ${quote(e.payload.label.trim())}.` : `Cleared the label on the connection ${ends}.` }
+          break
+        }
+        case 'NodeNoteUpdated': {
+          const was = before.nodes.find((x) => x.id === e.payload.id)?.note
+          const name = quote(nodeName(before, e.payload.id))
+          item = { who: 'you', text: !e.payload.text.trim() ? `Removed the note on ${name}.` : was ? `Edited the note on ${name}.` : `Added a note to ${name}.` }
+          break
+        }
+        case 'UserActionUndone':
+        case 'UserActionRedone': {
+          const t = texts.get(e.payload.targetSeq)
+          const verb = e.type === 'UserActionUndone' ? 'Undid' : 'Redid'
+          item = { who: 'you', text: t ? `${verb}: ${t}` : `${verb} a change.` }
+          break
+        }
         case 'UserMessaged': item = { who: 'you', text: `"${e.payload.text}"`, raw: e.payload.text, chat: true }; break
         case 'CoachResponded': item = { who: 'coach', text: e.payload.message, chat: true }; break
         case 'SessionFinished': item = { who: 'sys', text: 'Session finished.' }; break
@@ -45,6 +66,7 @@ export function narrate(log: EventLog): Step[] {
       }
     }
     if (item) {
+      if (e.type !== 'UserActionUndone' && e.type !== 'UserActionRedone') texts.set(e.seq, item.text)
       if (item.who === 'you' && e.actor === 'coach') item.who = 'coach'
       out.push({ ...item, seq: e.seq, ts: e.ts })
     }

@@ -14,6 +14,11 @@ export interface PayloadMap {
   EdgeAdded: { id: string; a: string; b: string; pa?: Port; pb?: Port }
   EdgeDeleted: { id: string }
   LayoutReset: { pos: Record<string, { fx: number; y: number }> }
+  EdgeLabeled: { id: string; label: string }
+  NodeNoteUpdated: { id: string; text: string }
+  /** targetSeq is the first seq of the undone action group (see undo.ts). */
+  UserActionUndone: { targetSeq: number }
+  UserActionRedone: { targetSeq: number }
   UserMessaged: { text: string }
   CoachResponded: { kind: 'opening' | 'reply' | 'hint' | 'ack'; message: string; level?: number; ruleId?: string }
   SessionFinished: Record<string, never>

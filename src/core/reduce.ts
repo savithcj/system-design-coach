@@ -1,5 +1,6 @@
 import type { EventLog, KnownEvent } from './events'
 import { emptyState, type State } from './state'
+import { undoView } from './undo'
 
 /**
  * State is a pure function of the log. Unknown event types are ignored so older and newer logs still load.
@@ -7,7 +8,9 @@ import { emptyState, type State } from './state'
  */
 export function reduce(log: EventLog): State {
   const s = emptyState()
+  const { ignored } = undoView(log)
   for (const raw of log) {
+    if (ignored.has(raw.seq)) continue
     const e = raw as KnownEvent
     switch (e.type) {
       case 'ProblemLoaded':
@@ -52,6 +55,17 @@ export function reduce(log: EventLog): State {
       case 'EdgeDeleted':
         s.edges = s.edges.filter((x) => x.id !== e.payload.id)
         break
+      case 'EdgeLabeled': {
+        const label = e.payload.label.trim()
+        for (const x of s.edges) if (x.id === e.payload.id) { if (label) x.label = label; else delete x.label }
+        break
+      }
+      case 'NodeNoteUpdated': {
+        // Notes are free text; only a fully blank note counts as "no note".
+        const text = e.payload.text.replace(/\s+$/, '')
+        for (const n of s.nodes) if (n.id === e.payload.id) { if (text.trim()) n.note = text; else delete n.note }
+        break
+      }
       case 'SessionFinished':
         s.finished = true
         break

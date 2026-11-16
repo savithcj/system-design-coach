@@ -26,3 +26,18 @@ export class Session {
     return id
   }
 }
+
+/** Learner-level undo/redo exactly as the UI appends them. Returns false when there is nothing to do. */
+import { undoView } from '../../src/core/undo'
+export function undo(s: Session): boolean {
+  const t = undoView(s.log).undoTarget
+  if (t === null) return false
+  s.add('UserActionUndone', { targetSeq: t })
+  return true
+}
+export function redo(s: Session): boolean {
+  const t = undoView(s.log).redoTarget
+  if (t === null) return false
+  s.add('UserActionRedone', { targetSeq: t })
+  return true
+}
