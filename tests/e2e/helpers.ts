@@ -20,14 +20,18 @@ export const node = (page: Page, label: string) =>
   page.locator('[data-node]').filter({ has: page.locator('span', { hasText: exact(label) }) }).first()
 
 /** Click an arrow on its stroke (the middle of a curve's bounding box is usually not on the curve). */
-export async function clickEdge(page: Page, index = 0): Promise<void> {
-  await page.waitForTimeout(100) // clicks within 60 ms of a drag are deliberately swallowed
-  const pt = await page.evaluate((i) => {
+export async function edgePoint(page: Page, index = 0): Promise<{ x: number; y: number }> {
+  return page.evaluate((i) => {
     const p = document.querySelectorAll<SVGPathElement>('#edgeSvg path[data-edge]')[i]!
     const q = p.getPointAtLength(p.getTotalLength() / 2)
     const m = p.getScreenCTM()!
     return { x: m.a * q.x + m.c * q.y + m.e, y: m.b * q.x + m.d * q.y + m.f }
   }, index)
+}
+
+export async function clickEdge(page: Page, index = 0): Promise<void> {
+  await page.waitForTimeout(100) // clicks within 60 ms of a drag are deliberately swallowed
+  const pt = await edgePoint(page, index)
   await page.mouse.click(pt.x, pt.y)
 }
 

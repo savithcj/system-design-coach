@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { connectIntent, copyLabel, defaultLabel } from '../../src/core/actions'
-import { NH, PORTS, autoPorts, edgePath, portPt, snapPort, SNAP, type Pt } from '../../src/core/geometry'
+import { NH, PORTS, autoPorts, edgePath, noteSide, portPt, snapPort, SNAP, usedPorts, type Pt } from '../../src/core/geometry'
 import { canvasHeight, freeSlot, gridParams, resolvePositions, tidyLayout, tidyPositions } from '../../src/core/layout'
 import { reduce } from '../../src/core/reduce'
 import { Session } from './helpers'
@@ -157,5 +157,23 @@ describe('state from an arbitrary log', () => {
     const s = new Session()
     s.node('client'); s.node('db')
     expect(reduce(s.log)).toEqual(reduce(s.log))
+  })
+})
+
+describe('note placement', () => {
+  const nw = gridParams(1000).nw
+  it('lists the dots that have arrows, using auto ports when none were chosen', () => {
+    const pos = { a: { x: 0, y: 0 }, b: { x: 0, y: 200 }, c: { x: 400, y: 0 } }
+    const edges = [{ a: 'a', b: 'b' }, { a: 'a', b: 'c', pa: 'l' as const }]
+    expect([...usedPorts('a', edges, pos, nw)].sort()).toEqual(['b', 'l'])
+    expect([...usedPorts('b', edges, pos, nw)]).toEqual(['t'])
+    expect([...usedPorts('zzz', edges, pos, nw)]).toEqual([])
+  })
+  it('puts the note below when that dot is free, otherwise above, right, left', () => {
+    expect(noteSide(new Set(), 0)).toBe('b')
+    expect(noteSide(new Set(['b']), 200)).toBe('t')
+    expect(noteSide(new Set(['b']), 10)).toBe('r') // above would leave the canvas
+    expect(noteSide(new Set(['b', 'r']), 10)).toBe('l')
+    expect(noteSide(new Set(['b', 't', 'r', 'l']), 200)).toBe('b')
   })
 })

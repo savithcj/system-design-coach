@@ -23,3 +23,17 @@
   - The report omits score, requirement check and reference design for now (see Step 1).
 - Dev only: `window.__sdc` exposes read-only `log()` and `state()` for Playwright. It is absent from production builds.
 - Known quirk kept on purpose: a click within 60 ms of finishing a drag is ignored (it swallows the click the browser fires after pointer-up).
+
+## Step 3: arrow labels, node notes, undo/redo
+- **Core**: `EdgeLabeled`, `NodeNoteUpdated`, `UserActionUndone`, `UserActionRedone`. Undo is an event: the reducer skips the undone group, the log only grows (`core/undo.ts`).
+  - One undo step per committed edit (Enter or blur), and a box's creation plus its immediate naming is one step. A drag or a burst of arrow-key moves within 1.5 s is one step (it is one coalesced event).
+  - Redo restores the most recently undone step and is cleared by any newer board edit; chat does not clear it. Chat, coach events and the opening message are never undone.
+  - The report keeps what happened and adds "Undid: ..." / "Redid: ..." lines.
+- **Tests**: reducer tests per event, undo of every edit type including delete (box, note and arrows return), redo rules, replay with undo in the log, and a seeded model-based property test (k undos land on the state after n-k edits; m redos on n-k+m).
+- **UI**
+  - Arrow label: double-click (tap-timing, like boxes) or Enter/F2 on a focused arrow; Enter or blur saves, Escape reverts, empty clears. Labels are drawn in a layer above the boxes with a halo, because the grid gap is narrower than a label.
+  - Node note: `N` on a focused box, the hover/focus note icon, or click the note. Enter or blur saves, Shift+Enter adds a line, Escape reverts. The note is as wide as its box and sits on a side whose dot has no arrow (below, else above, else right, else left; `noteSide`), so it never hides a connection. It moves with its box.
+  - Undo/redo: Ctrl/Cmd+Z and Ctrl/Cmd+Shift+Z, announced through the live region ("Undid: Added ..."). Inside a text field the browser's own text undo wins.
+- **Keyboard access to arrows** (not specified in the docs; needed because arrows were mouse-only): `E` on a focused box moves focus to one of its arrows; arrow keys switch between arrows; Enter/F2 labels, Delete removes, Escape returns to the box. Clicking an arrow now focuses it, so Enter/F2/Delete work right after a click. The arrow layer is no longer `aria-hidden` (arrows are real controls with labels). The hidden help text lists the new keys.
+- Known limitation: on a very short gap between two boxes the label's halo covers the whole arrow. Dragging the boxes apart restores it.
+- Verified in real Chrome (light and dark) including the keyboard focus halo on a selected arrow and the note editor. The screenshots caught two layout bugs the tests could not: notes covering neighbouring boxes and labels clipped by boxes.
