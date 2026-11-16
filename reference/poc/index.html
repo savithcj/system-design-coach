@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>System Design Coach</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#fafaf9;--surface:#fff;--ink:#18181b;--muted:#6b6b72;--line:#e7e5e4;--line2:#d4d4d8;--dot:#e7e7ea;--edge:#71717a;--accent:#2563eb;--solid:#18181b;--onsolid:#fafafa;--soft:#f4f4f5;--danger:#b42318;--shadow:0 10px 30px rgba(0,0,0,.10)}
+@media (prefers-color-scheme:dark){:root{--bg:#0e0e10;--surface:#171719;--ink:#f4f4f5;--muted:#a1a1aa;--line:#27272a;--line2:#3f3f46;--dot:#26262a;--edge:#a1a1aa;--accent:#8aa9ff;--solid:#f4f4f5;--onsolid:#111113;--soft:#222226;--danger:#ff9488;--shadow:0 10px 30px rgba(0,0,0,.5)}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+h1,h2,h3{margin:0}
+h1{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.app{display:flex;flex-direction:column;min-height:100vh}
+.grow{flex:1}
+.muted{color:var(--muted)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.skip{position:absolute;left:-999px}.skip:focus{left:8px;top:8px;z-index:50;background:var(--surface);padding:8px 12px;border-radius:8px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.top{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.btn{font:inherit;font-weight:500;color:var(--ink);background:var(--surface);border:1px solid var(--line2);border-radius:8px;padding:0 12px;min-height:34px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn:hover{background:var(--soft)}
+.btn.ghost{border-color:transparent;background:transparent}
+.btn.ghost:hover{background:var(--soft)}
+.btn.solid{background:var(--solid);border-color:var(--solid);color:var(--onsolid)}
+.btn.solid:hover{opacity:.88}
+.btn.danger{color:var(--danger)}
+.btn:disabled{opacity:.45;cursor:default}
+.link{border:0;background:none;color:var(--accent);font:inherit;font-weight:500;cursor:pointer;padding:4px 0;min-height:28px}
+.link:hover{text-decoration:underline}
+@media (pointer:coarse){.btn{min-height:44px}.link{min-height:44px}}
+
+.seg{display:inline-flex;background:var(--soft);border-radius:9px;padding:3px;gap:2px;max-width:100%;overflow-x:auto}
+.seg button{font:inherit;font-weight:500;border:0;background:transparent;color:var(--muted);padding:5px 12px;border-radius:7px;cursor:pointer;min-height:30px;white-space:nowrap}
+.seg button[aria-checked=true]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.10)}
+@media (pointer:coarse){.seg button{min-height:40px}}
+
+main{display:flex;flex-direction:column;flex:1;min-height:0}
+.split{display:flex;flex-direction:column;flex:1;min-height:0}
+.boardpane{display:flex;flex-direction:column;min-width:0;flex:1;min-height:0}
+.prompt{margin:0;padding:14px 16px 10px;color:var(--muted);max-width:78ch}
+.toolbar{display:flex;gap:6px;padding:0 16px 10px;align-items:center}
+.pickwrap{position:relative}
+.canvas{margin:0 16px;border:1px solid var(--line);border-radius:12px;background-color:var(--surface);background-image:radial-gradient(var(--dot) 1px,transparent 1px);background-size:20px 20px;overflow:auto;padding:16px;min-height:340px;flex:1}
+#board{position:relative;margin:0 auto}
+#board .empty{padding:56px 8px;text-align:center;color:var(--muted)}
+.dock{margin:10px 16px 0;border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.dock input{font:inherit;border:1px solid var(--line2);border-radius:8px;padding:6px 10px;background:var(--bg);color:var(--ink);min-width:140px;flex:1;min-height:34px}
+.chip{display:inline-flex;align-items:center;gap:4px;background:var(--soft);border-radius:999px;padding:2px 4px 2px 10px;font-size:12.5px}
+.chip button{border:0;background:transparent;color:var(--muted);cursor:pointer;padding:2px 7px;border-radius:999px;font-size:16px;line-height:1;min-height:24px}
+.chip button:hover{color:var(--ink)}
+
+.node{position:absolute;display:flex;flex-direction:column;justify-content:center;gap:1px;text-align:left;padding:6px 20px;background:transparent;border:0;font:inherit;cursor:grab;touch-action:none;color:var(--line2)}
+.node:active{cursor:grabbing}
+.node .shp{position:absolute;left:0;top:0;pointer-events:none;overflow:visible}
+.shp .sf{fill:var(--surface)}
+.node small,.node span{position:relative;color:var(--muted)}
+.node span{color:var(--ink)}
+.node[data-role=db]{padding-top:12px;padding-bottom:4px}
+.node small{font-size:10.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:500;line-height:1.2}
+.node span{font-size:13px;font-weight:500;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.node[aria-pressed=true]{color:var(--accent)}
+.nodeName{position:absolute;z-index:2;font:inherit;font-size:13px;font-weight:500;line-height:20px;height:20px;color:var(--ink);background:var(--surface);border:0;border-bottom:1px solid var(--accent);padding:0;margin:0;border-radius:0}
+.nodeName:focus-visible{outline:none;border-bottom-width:2px}
+.node:focus-visible{outline:none}
+.node:focus-visible .shp path{stroke:var(--accent);stroke-width:2.4}
+.node.editing span{visibility:hidden}
+.hs{position:absolute;left:0;top:0;width:0;height:0}
+.handle{position:absolute;z-index:3;width:12px;height:12px;border-radius:50%;border:2px solid var(--accent);background:var(--surface);cursor:crosshair;touch-action:none;opacity:0;transition:opacity .12s,transform .12s}
+.handle::after{content:"";position:absolute;inset:-9px;border-radius:50%}
+.node:hover+.hs .handle,.hs:hover .handle,.hs.on .handle{opacity:1}
+#board.linking .hs .handle{opacity:.6}
+@media (hover:none){.hs.sel .handle{opacity:1}}
+.handle:hover,.handle.snap{background:var(--accent);opacity:1!important;transform:scale(1.25)}
+.node.snap{color:var(--accent)}
+.node.snap .shp .sf{fill:color-mix(in srgb,var(--accent) 10%,var(--surface))}
+@media (pointer:coarse){.handle::after{inset:-16px}}
+.node[aria-pressed=true] .shp{filter:drop-shadow(0 0 0 var(--accent)) drop-shadow(0 0 3px color-mix(in srgb,var(--accent) 45%,transparent))}
+
+
+.popup{position:absolute;top:calc(100% + 6px);left:0;z-index:30;width:min(340px,86vw);background:var(--surface);border:1px solid var(--line2);border-radius:12px;box-shadow:var(--shadow);padding:6px}
+.popup input{width:100%;font:inherit;font-size:14px;border:0;border-bottom:1px solid var(--line);padding:8px 8px 10px;background:transparent;color:var(--ink);border-radius:0}
+.popup input:focus-visible{outline:2px solid var(--accent);outline-offset:-2px;border-radius:6px}
+#pickList{list-style:none;margin:6px 0 0;padding:0;max-height:260px;overflow:auto}
+#pickList li{display:flex;align-items:center;gap:10px;padding:8px;border-radius:7px;cursor:pointer}
+#pickList li[aria-selected=true]{background:var(--soft)}
+#pickList .shp.mini{position:static;flex:none;color:var(--muted)}
+#pickList small{margin-left:auto;color:var(--muted);font-size:12px}
+.pickq{display:block;padding:8px 8px 4px}
+.popup form input{width:100%;font:inherit;border:1px solid var(--line2);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--ink)}
+.pickneed{font-size:12.5px;margin:6px 2px 0}
+
+.splitter{display:none}
+.chat{display:flex;flex-direction:column;background:var(--surface);border-top:1px solid var(--line);margin-top:14px;min-height:0}
+.chathead{padding:12px 16px;font-weight:600;border-bottom:1px solid var(--line)}
+#coach{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:14px;min-height:180px;max-height:52vh}
+.msg{max-width:94%;font-size:14px}
+.msg.you{align-self:flex-end;background:var(--soft);padding:7px 12px;border-radius:14px 14px 4px 14px}
+.msg.coach{align-self:flex-start}
+.msg details{margin-top:6px}
+.msg summary{cursor:pointer;color:var(--muted);font-size:13px;min-height:28px;display:flex;align-items:center}
+.trace{padding-left:20px;margin:6px 0;font-size:13px;color:var(--muted)}
+.trace li{margin:8px 0}
+.trace b{color:var(--ink);font-weight:500}
+.trace code{font:12px ui-monospace,Menlo,Consolas,monospace;background:var(--soft);padding:1px 5px;border-radius:5px;color:var(--ink)}
+.composer{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
+.composer input{flex:1;min-width:0;font:inherit;font-size:14px;border:1px solid var(--line2);border-radius:10px;padding:9px 12px;background:var(--bg);color:var(--ink)}
+.send{width:40px;height:40px;border-radius:10px;border:0;background:var(--solid);color:var(--onsolid);cursor:pointer;display:grid;place-items:center;flex:none}
+.send:hover{opacity:.88}
+
+.report{width:100%;max-width:860px;margin:0 auto;padding:12px 16px 40px;overflow:auto;flex:1;min-height:0}
+.rbar{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+.paper{background:#fff;color:#111;border:1px solid var(--line);border-radius:12px;padding:28px 32px;font-family:Georgia,"Times New Roman",serif;font-size:15px;line-height:1.55}
+.paper h2{font-size:17px;margin:20px 0 6px;border-bottom:1px solid #ddd;padding-bottom:3px}
+.paper h3{font-size:24px;margin:0 0 2px}
+.paper ol,.paper ul{padding-left:22px;margin:4px 0}
+.paper li{margin:3px 0}
+.paper pre{background:#f6f6f4;border:1px solid #e2e2df;color:#111}
+.paper .mm{overflow:auto}
+pre,textarea.out{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;font:12px/1.5 ui-monospace,Menlo,Consolas,monospace;overflow:auto;width:100%;max-height:220px;color:var(--ink)}
+textarea.out{height:240px;resize:vertical}
+details.plain{margin-top:14px}
+details.plain summary{cursor:pointer;font-weight:500;min-height:36px;display:flex;align-items:center}
+
+dialog{border:1px solid var(--line2);border-radius:14px;padding:18px;width:min(640px,92vw);background:var(--surface);color:var(--ink);box-shadow:var(--shadow)}
+dialog::backdrop{background:rgba(0,0,0,.4)}
+dialog h3{font-size:13px;margin:14px 0 6px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.05em}
+.dhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.dhead h2{font-size:16px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+
+@media (max-width:899px){
+  .top .seg{order:5;width:100%}
+  .composer input,.dock input,.popup input{font-size:16px}
+}
+@media (min-width:900px){
+  .app{height:100vh;min-height:620px}
+  .split{flex-direction:row}
+  .chat{width:var(--chat-w,360px);border-top:0;margin:0;flex:none}
+  #coach{max-height:none}
+  .splitter{display:block;width:9px;margin:0 -4px;cursor:col-resize;position:relative;z-index:2;flex:none}
+  .splitter::after{content:"";position:absolute;left:4px;top:0;bottom:0;width:1px;background:var(--line)}
+  .splitter:hover::after,.splitter:focus-visible::after{background:var(--accent);width:2px;left:3px}
+  .splitter:focus-visible{outline:none}
+  .canvas{margin-bottom:16px}
+  .dock{margin-bottom:16px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="app">
+  <header class="top">
+    <h1>Design Coach</h1>
+    <div id="seg" class="seg" role="radiogroup" aria-label="Problem"></div>
+    <span class="grow"></span>
+    <button id="detailsBtn" class="btn ghost">Details</button>
+    <button id="finishBtn" class="btn solid">Finish</button>
+  </header>
+
+  <main id="main">
+    <div id="designView" class="split">
+      <section class="boardpane" aria-label="Design board">
+        <p id="prompt" class="prompt"></p>
+        <div class="toolbar" role="toolbar" aria-label="Board tools" id="toolbar">
+          <div class="pickwrap">
+            <button id="addBtn" class="btn" aria-haspopup="listbox" aria-expanded="false" aria-controls="picker">+ Add component</button>
+            <div id="picker" class="popup" hidden>
+              <div id="pickStage1">
+                <input id="pickInp" type="text" role="combobox" aria-expanded="true" aria-controls="pickList" aria-autocomplete="list" aria-label="Choose a component type" placeholder="Search" autocomplete="off">
+                <ul id="pickList" role="listbox" aria-label="Component types"></ul>
+              </div>
+            </div>
+          </div>
+          <button id="tidyBtn" class="btn ghost" hidden>Tidy up</button>
+        </div>
+        <div class="canvas" id="boardWrap"><div id="board" role="group" aria-label="Your design"></div></div>
+      </section>
+      <div id="splitter" class="splitter" role="separator" aria-orientation="vertical" aria-label="Resize coach panel" tabindex="0"></div>
+      <aside class="chat" aria-label="Coach chat">
+        <div class="chathead">Coach</div>
+        <div id="coach" role="log" aria-live="polite" aria-label="Conversation"></div>
+        <form id="chatForm" class="composer">
+          <label for="chatInp" class="sr">Message the coach</label>
+          <input id="chatInp" type="text" placeholder="Message" autocomplete="off">
+          <button type="submit" class="send" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+        </form>
+      </aside>
+    </div>
+
+    <div id="reportView" class="report" hidden>
+      <div class="rbar"><button id="backBtn" class="btn ghost">&larr; Back to design</button><span class="grow"></span><button id="copyTex" class="btn solid">Copy LaTeX</button></div>
+      <h2 id="reportH" tabindex="-1" class="sr">Your study guide</h2>
+      <div id="reportBody"></div>
+      <details id="texDetails" class="plain"><summary>LaTeX source</summary><textarea id="texSrc" class="out" readonly aria-label="LaTeX source"></textarea></details>
+    </div>
+  </main>
+</div>
+
+<dialog id="detailsDlg" aria-labelledby="detTitle">
+  <div class="dhead"><h2 id="detTitle">Details</h2><button id="detClose" class="btn ghost">Close</button></div>
+  <h3>Board as Mermaid</h3>
+  <pre id="mmSrc" tabindex="0"></pre>
+  <h3>Event log</h3>
+  <pre id="evLog" tabindex="0"></pre>
+  <div class="row"><button id="copyEv" class="btn">Copy events as JSON</button><button id="restart" class="btn danger">Start over</button></div>
+</dialog>
+
+<div id="sr" class="sr" aria-live="polite"></div>
+<div id="moveHelp" class="sr" hidden>Arrow keys move this box; hold Shift to move further. Enter or F2 renames it, C connects it to another box, Control or Command C and V copy and paste it, Delete removes it.</div>
+
+<script>
+/* ============ The hidden answer key ============ */
+var ROLES = {
+  client:{label:'Client',hint:'e.g. Web app',color:'#6b7280'},
+  service:{label:'Server',hint:'e.g. API server, load balancer, worker',color:'#0f8a6b'},
+  cache:{label:'Cache',hint:'e.g. Redis',color:'#d97706'},
+  db:{label:'Database',hint:'e.g. Postgres',color:'#7c3aed'},
+  blob:{label:'Storage',hint:'e.g. S3, files',color:'#92400e'},
+  queue:{label:'Queue',hint:'e.g. Kafka',color:'#db2777'},
+  other:{label:'Other',hint:'Anything else',color:'#52525b'}
+};
+var PROBLEMS = [
+ {id:'url', title:'Design a URL shortener',
+  prompt:'Users submit long URLs and receive short links. Visiting a short link must redirect fast. Assume 100M new URLs per month and 100 reads per write. Click analytics are wanted but must never slow down a redirect.',
+  nodes:[
+   {id:'c',role:'client',label:'Client',nudge:'Every design starts with who uses the system.',why:'Browsers and apps create links and follow redirects.'},
+   {id:'lb',role:'service',label:'Load Balancer',nudge:'What sits in front of your servers so no single server is the bottleneck or a single point of failure?',why:'Spreads traffic over stateless API servers and removes a single point of failure.'},
+   {id:'api',role:'service',label:'API Server',nudge:'Where does the create-link and redirect logic live?',why:'Stateless service handling create and redirect, scaled horizontally.'},
+   {id:'id',role:'service',label:'ID Generator',nudge:'How do you guarantee every short code is unique without a database lookup on each write?',why:'Produces unique short codes without collisions, for example by handing out counter ranges.',ddia:'partitioning and unique ID generation'},
+   {id:'cache',role:'cache',label:'Cache',nudge:'Reads outnumber writes 100 to 1. What would you do about that?',why:'Hot code-to-URL mappings are served from memory so most redirects never touch the database.',ddia:'caching and read-heavy workloads'},
+   {id:'db',role:'db',label:'Database',nudge:'Where do the mappings live durably?',why:'Durable key-value store for code to URL mappings; the access pattern is point lookups.',ddia:'storage engines, replication, partitioning'},
+   {id:'q',role:'queue',label:'Message Queue',nudge:'Analytics must not slow down redirects. How can you decouple them from the request path?',why:'Click events are published asynchronously so the redirect path stays fast.',ddia:'stream processing and messaging'},
+   {id:'w',role:'service',label:'Worker',nudge:'Something has to consume what the queue holds.',why:'Consumes click events and aggregates them in batches.'}
+  ],
+  edges:[['c','lb'],['lb','api'],['api','id'],['api','cache'],['api','db'],['api','q'],['q','w'],['w','db']]
+ },
+ {id:'rate', title:'Design an API rate limiter',
+  prompt:'Limit each client to a fixed number of requests per minute across a fleet of API servers. Rejected requests get a 429 response. Limits differ per customer tier. The limiter must add very little latency.',
+  nodes:[
+   {id:'c',role:'client',label:'Client',nudge:'Who is being limited?',why:'The callers whose request rate we want to bound.'},
+   {id:'lb',role:'service',label:'Load Balancer',nudge:'What is the front door for all traffic?',why:'Entry point that distributes requests and forwards them through the limiter.'},
+   {id:'rl',role:'service',label:'Rate Limiter',nudge:'Where do you decide to allow or reject, before the backend does any work?',why:'Rejects excess requests early with 429 so the backend is protected.',ddia:'consistency and atomic counters'},
+   {id:'cache',role:'cache',label:'Counter Store',nudge:'The limiter runs on many nodes. Where do the counters live so every node sees the same numbers?',why:'Shared in-memory counters with expiry, updated with atomic increments.',ddia:'caching, consistency'},
+   {id:'db',role:'db',label:'Rules Database',nudge:'Limits differ per tier. Where are those rules stored?',why:'Per-customer limits are configuration, read rarely and cached locally by the limiter.'},
+   {id:'api',role:'service',label:'API Servers',nudge:'What is the protected resource at the end?',why:'The backend that only sees traffic the limiter has allowed.'}
+  ],
+  edges:[['c','lb'],['lb','rl'],['rl','cache'],['rl','db'],['rl','api']]
+ },
+ {id:'feed', title:'Design a news feed',
+  prompt:'Users post text and images and follow others. Each user sees a feed of recent posts from the people they follow. Reads are far more frequent than writes. Some accounts have millions of followers.',
+  nodes:[
+   {id:'c',role:'client',label:'Client',nudge:'Who posts and who reads?',why:'Apps that publish posts and read feeds.'},
+   {id:'cdn',role:'service',label:'CDN',nudge:'Images are large and read often. How do you serve them close to users?',why:'Serves media from edge locations, offloading the origin.'},
+   {id:'blob',role:'blob',label:'Object Storage',nudge:'Where do the image bytes live?',why:'Cheap durable storage for media; the database only keeps references.'},
+   {id:'lb',role:'service',label:'Load Balancer',nudge:'What fronts the application servers?',why:'Distributes requests over stateless API servers.'},
+   {id:'api',role:'service',label:'API Server',nudge:'Where do posting and feed-reading requests land?',why:'Handles publish and read-feed requests.'},
+   {id:'db',role:'db',label:'Posts and Graph DB',nudge:'Where do posts and the follow graph live durably?',why:'Source of truth for posts and follow relationships.',ddia:'data models, partitioning, replication'},
+   {id:'q',role:'queue',label:'Fan-out Queue',nudge:'Pushing a post to millions of followers inside the request would be slow. What do you do instead?',why:'Decouples publishing from feed delivery so posting returns immediately.',ddia:'describing load, fan-out, stream processing'},
+   {id:'w',role:'service',label:'Fan-out Worker',nudge:'Who processes the fan-out work?',why:'Looks up followers and writes the post into their feeds.'},
+   {id:'cache',role:'cache',label:'Feed Cache',nudge:'Reading a feed should not require joining posts across many accounts on every request. What do you precompute?',why:'Precomputed per-user feeds make reads a single cache lookup.',ddia:'materialized views and caching'}
+  ],
+  edges:[['c','cdn'],['cdn','blob'],['c','lb'],['lb','api'],['api','db'],['api','blob'],['api','q'],['q','w'],['w','db'],['w','cache'],['api','cache']]
+ }
+];
+
+var SHORT = {url:'URL shortener', rate:'Rate limiter', feed:'News feed'};
+var PAL = ['#2563eb','#15803d','#c2410c','#7e22ce','#be185d','#0e7490'];
+
+/* ============ Event store: the single source of truth ============ */
+var sessions = {}, current = null, events = [];
+function append(type, payload, actor){
+  var e = {seq:events.length+1, ts:Date.now(), type:type, payload:payload||{}, actor:actor||'user'};
+  events.push(e); return e;
+}
+function dispatch(type, payload, actor){ var e = append(type, payload, actor); render(); return e; }
+function nextSeq(){ return events.length + 1; }
+
+function reduce(evs){
+  var s = {problemId:null, nodes:[], edges:[], types:{}, hints:{}, undone:{}, checks:0, finished:false};
+  evs.forEach(function(e){
+    var p = e.payload;
+    switch(e.type){
+      case 'ProblemLoaded': s.problemId = p.problemId; break;
+      case 'NodeAdded': s.nodes.push({id:p.id, role:p.role, label:p.label, fx:p.fx, y:p.y}); break;
+      case 'TypeDefined': s.types[p.id] = {label:p.label, color:p.color}; break;
+      case 'NodeMoved': s.nodes.forEach(function(n){ if(n.id===p.id){ n.fx = p.fx; n.y = p.y; } }); break;
+      case 'LayoutReset': s.nodes.forEach(function(n){ if(p.pos && p.pos[n.id]){ n.fx = p.pos[n.id].fx; n.y = p.pos[n.id].y; } else { delete n.fx; delete n.y; } }); break;
+      case 'NodeRenamed': s.nodes.forEach(function(n){ if(n.id===p.id) n.label = p.to; }); break;
+      case 'NodeDeleted':
+        s.nodes = s.nodes.filter(function(x){return x.id!==p.id;});
+        s.edges = s.edges.filter(function(x){return x.a!==p.id && x.b!==p.id;}); break;
+      case 'EdgeAdded': s.edges.push({id:p.id, a:p.a, b:p.b, pa:p.pa, pb:p.pb}); break;
+      case 'EdgeDeleted': s.edges = s.edges.filter(function(x){return x.id!==p.id;}); break;
+      case 'CoachResponded': if(p.kind==='reply') s.checks++; if(p.hintKey) s.hints[p.hintKey] = p.hintLevel; break;
+      case 'CoachEditUndone': s.undone[p.batch] = true; break;
+      case 'SessionFinished': s.finished = true; break;
+    }
+  });
+  return s;
+}
+
+/* ============ UI state (not events) ============ */
+var sel = null, selEdge = null, editing = false, connectFrom = null, connectPort = null, reportOpen = false, pendingFocus = null;
+function state(){ return reduce(events); }
+function prob(s){ var id = (s||state()).problemId; return PROBLEMS.filter(function(p){return p.id===id;})[0]; }
+function nm(s,id){ var n = s.nodes.filter(function(x){return x.id===id;})[0]; return n ? n.label : '?'; }
+var CUSTOM = {};
+function typeInfo(role){ return ROLES[role] || CUSTOM[role] || ROLES.service; }
+function rl(role){ return typeInfo(role).label; }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function say(t){ var el = document.getElementById('sr'); el.textContent = ''; setTimeout(function(){ el.textContent = t; }, 30); }
+
+/* ============ Judge ============ */
+function words(s){ return String(s).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean); }
+function sim(a,b){
+  var A = words(a), B = words(b); if(!A.length||!B.length) return 0;
+  var inter = A.filter(function(w){return B.indexOf(w)>=0;}).length;
+  return inter / (A.length + B.length - inter);
+}
+/* Stand-in for semantic judgement. An LLM judge would decide whether any reasonable choice
+   (Kafka, RabbitMQ, SQS...) satisfies each requirement; this list only recognises common names. */
+var ALIASES = {
+  queue:['kafka','rabbitmq','sqs','kinesis','pulsar','nats','pubsub','activemq','queue','broker','stream'],
+  cache:['redis','memcached','memcache','elasticache','hazelcast','cache'],
+  db:['postgres','postgresql','mysql','dynamodb','cassandra','mongodb','mongo','database','sql','nosql','spanner','cockroachdb','scylla','bigtable','aurora','mariadb','elasticsearch','opensearch','solr'],
+  blob:['s3','gcs','blob','minio','storage']
+};
+function semRole(n){
+  var ws = words(n.label), hits = [];
+  Object.keys(ALIASES).forEach(function(r){ if(ALIASES[r].some(function(a){return ws.indexOf(a)>=0;})) hits.push(r); });
+  if(hits.indexOf(n.role)>=0) return n.role;
+  if(n.role==='service' && Object.keys(KINDS).some(function(k){ return KINDS[k].some(function(a){ return ws.indexOf(a)>=0; }); })) return 'service';
+  return hits.length ? hits[0] : n.role;
+}
+/* Name hints for the single "Server" category: which kind of server a name suggests.
+   (Also a stand-in for the LLM judge.) Keys are the target node ids that are servers. */
+var KINDS = {
+  lb:['nginx','haproxy','alb','elb','envoy','balancer','gateway','proxy','traefik'],
+  api:['api','app','backend','web','service','server','flask','django','express','spring'],
+  id:['snowflake','uuid','ulid','kgs','zookeeper','etcd','consul','counter','generator','id'],
+  w:['worker','consumer','lambda','aggregator','processor','job','batch','fanout','fan'],
+  rl:['limiter','throttler','throttle','ratelimit','ratelimiter','limit'],
+  cdn:['cdn','cloudflare','cloudfront','akamai','fastly','edge']
+};
+function kindHit(u,t){ var k = KINDS[t.id]; if(!k || t.role!=='service') return false; var ws = words(u.label); return k.some(function(a){ return ws.indexOf(a)>=0; }); }
+function pairScore(u,t){ var b = sim(u.label,t.label); return kindHit(u,t) ? Math.max(b,0.9) : b; }
+function evaluate(s){
+  var P = prob(s), assign = {}, usedT = {}, pairs = [];
+  s.nodes.forEach(function(u,ui){ P.nodes.forEach(function(t,ti){
+    if(semRole(u)===t.role) pairs.push({u:u,t:t,s:pairScore(u,t),ui:ui,ti:ti});
+  });});
+  pairs.sort(function(a,b){return (b.s-a.s)||(a.ui-b.ui)||(a.ti-b.ti);});
+  pairs.forEach(function(p){ if(assign[p.u.id]||usedT[p.t.id]) return; assign[p.u.id]=p.t.id; usedT[p.t.id]=p.u.id; });
+  var tEdge = {}; P.edges.forEach(function(e){ tEdge[e[0]+'>'+e[1]] = true; });
+  var matched = {}, wrong = [], extra = [];
+  s.edges.forEach(function(e){
+    var ta = assign[e.a], tb = assign[e.b];
+    if(ta && tb){
+      if(tEdge[ta+'>'+tb]) matched[ta+'>'+tb] = true;
+      else if(tEdge[tb+'>'+ta]) wrong.push(e);
+      else extra.push(e);
+    } else extra.push(e);
+  });
+  wrong = wrong.filter(function(e){ return !matched[assign[e.b]+'>'+assign[e.a]]; });
+  var missingNodes = P.nodes.filter(function(t){return !usedT[t.id];});
+  var missingEdges = P.edges.filter(function(e){return !matched[e[0]+'>'+e[1]];});
+  var extraNodes = s.nodes.filter(function(u){return !assign[u.id];});
+  var total = P.nodes.length + P.edges.length;
+  var got = (P.nodes.length - missingNodes.length) + (P.edges.length - missingEdges.length);
+  return {assign:assign, usedT:usedT, matched:matched, missingNodes:missingNodes, missingEdges:missingEdges, extraNodes:extraNodes,
+          wrong:wrong, extra:extra, score:Math.round(100*got/total), complete:!missingNodes.length && !missingEdges.length};
+}
+var JUDGE = 'rules-v0 (stand-in for an LLM judge)';
+function verdictsOf(s, ev){
+  var P = prob(s), out = [];
+  function tn(id){ return P.nodes.filter(function(x){return x.id===id;})[0]; }
+  P.nodes.forEach(function(t){
+    var uid = ev.usedT[t.id], u = uid ? s.nodes.filter(function(x){return x.id===uid;})[0] : null;
+    out.push({need:t.label+': '+t.why, status:u?'satisfied':'missing',
+      reason:u ? '"'+u.label+'" fills the '+rl(t.role)+' requirement'+(semRole(u)!==u.role?' (recognised from its name)':'')+'.' : 'Nothing on the board fills the '+rl(t.role)+' requirement.'});
+  });
+  P.edges.forEach(function(e){
+    var k = e[0]+'>'+e[1], rev = ev.wrong.some(function(w){ return ev.assign[w.a]===e[1] && ev.assign[w.b]===e[0]; });
+    out.push({need:'Connection '+tn(e[0]).label+' → '+tn(e[1]).label, status: ev.matched[k]?'satisfied':rev?'reversed':'missing',
+      reason: ev.matched[k] ? 'Present.' : rev ? 'The arrow is drawn the other way.' : 'Not on the board.'});
+  });
+  return out;
+}
+
+/* ============ Coach (canned; a model would produce the same event) ============ */
+function pickHint(s, ev){
+  var P = prob(s);
+  if(ev.missingNodes.length){
+    var best = null, bestScore = -1;
+    ev.missingNodes.forEach(function(t,i){
+      var links = P.edges.filter(function(e){ return (e[0]===t.id && ev.usedT[e[1]]) || (e[1]===t.id && ev.usedT[e[0]]); }).length;
+      var sc = links*10 - i; if(sc>bestScore){ bestScore=sc; best=t; }
+    });
+    return {kind:'node', key:'n:'+best.id, t:best};
+  }
+  if(ev.missingEdges.length) return {kind:'edge', key:'e:'+ev.missingEdges[0][0]+'>'+ev.missingEdges[0][1], e:ev.missingEdges[0]};
+  if(ev.wrong.length) return {kind:'wrong', key:'w:'+ev.wrong[0].id, w:ev.wrong[0]};
+  return null;
+}
+function hintText(s, ev, h, level){
+  var P = prob(s);
+  function tn(id){ return P.nodes.filter(function(x){return x.id===id;})[0]; }
+  function un(id){ var u = ev.usedT[id]; return u ? nm(s,u) : tn(id).label; }
+  if(h.kind==='node'){
+    var nb = P.edges.filter(function(e){return e[0]===h.t.id||e[1]===h.t.id;}).map(function(e){return e[0]===h.t.id?e[1]:e[0];}).filter(function(id){return ev.usedT[id];}).map(un);
+    if(level===1) return h.t.nudge;
+    if(level===2) return 'Think about adding a '+rl(h.t.role)+(nb.length ? ' and connecting it to '+nb.map(function(x){return '"'+x+'"';}).join(', ') : '')+'.';
+    return 'Add "'+h.t.label+'" ('+rl(h.t.role)+'). '+h.t.why;
+  }
+  if(h.kind==='edge'){
+    var a = un(h.e[0]), b = un(h.e[1]);
+    if(level===1) return 'Look at "'+a+'" and "'+b+'". How do they interact?';
+    if(level===2) return 'There is a missing connection between "'+a+'" and "'+b+'". Think about which one starts it.';
+    return 'Connect "'+a+'" to "'+b+'" (the arrow starts at the first).';
+  }
+  var w = h.w;
+  if(level===1) return 'One of your arrows may point the wrong way.';
+  if(level===2) return 'Check the arrow between "'+nm(s,w.a)+'" and "'+nm(s,w.b)+'".';
+  return 'Flip it: the arrow should start at "'+nm(s,w.b)+'" and end at "'+nm(s,w.a)+'".';
+}
+function coachReply(s, wantsHint){
+  if(wantsHint===undefined) wantsHint = true;
+  var ev = evaluate(s), h = wantsHint ? pickHint(s,ev) : null, parts = [(wantsHint?'':'Noted. ')+'Progress: '+ev.score+'%.'], issues = [], level = null;
+  ev.extraNodes.forEach(function(n){ issues.push('"'+n.label+'" is not in the reference design. Can you justify it?'); });
+  ev.wrong.forEach(function(e){ issues.push('The arrow between "'+nm(s,e.a)+'" and "'+nm(s,e.b)+'" may point the wrong way.'); });
+  ev.extra.forEach(function(e){ if(ev.assign[e.a]&&ev.assign[e.b]) issues.push('Unexpected connection from "'+nm(s,e.a)+'" to "'+nm(s,e.b)+'". What flows over it?'); });
+  s.nodes.forEach(function(n){ if(!s.edges.some(function(e){return e.a===n.id||e.b===n.id;}) && s.nodes.length>1) issues.push('"'+n.label+'" is not connected to anything.'); });
+  issues.slice(0,2).forEach(function(i){ parts.push(i); });
+  if(h){ level = Math.min(3,(s.hints[h.key]||0)+1); parts.push('Hint: '+hintText(s,ev,h,level)); }
+  else if(ev.complete) parts.push('Everything in the reference is covered. Tap Finish to build your study guide.');
+  return {score:ev.score, judge:JUDGE, verdicts:verdictsOf(s,ev), hintKey:h?h.key:null, hintLevel:level, kind:'reply', message:parts.join(' ')};
+}
+
+/* ============ Projections ============ */
+function elapsed(ts){ var d = Math.max(0, Math.round((ts-events[0].ts)/1000)); return Math.floor(d/60)+':'+('0'+(d%60)).slice(-2); }
+function narrate(evs){
+  var out = [];
+  evs.forEach(function(e,i){
+    var before = reduce(evs.slice(0,i)), p = e.payload, item = null;
+    if(p && p.silent) return;
+    switch(e.type){
+      case 'NodeAdded': item = {who:'you', text:'Added "'+p.label+'" ('+rl(p.role)+').'}; break;
+      case 'TypeDefined': item = {who:'you', text:'Created a custom component type "'+p.label+'".'}; break;
+      case 'NodeRenamed': item = {who:'you', text:'Renamed "'+nm(before,p.id)+'" to "'+p.to+'".'}; break;
+      case 'NodeDeleted': item = {who:'you', text:'Removed "'+nm(before,p.id)+'" and its connections.'}; break;
+      case 'EdgeAdded': item = {who:'you', text:'Connected "'+nm(before,p.a)+'" → "'+nm(before,p.b)+'".'}; break;
+      case 'EdgeDeleted':
+        var ed = before.edges.filter(function(x){return x.id===p.id;})[0];
+        item = {who:'you', text:'Removed the connection "'+(ed?nm(before,ed.a):'?')+'" → "'+(ed?nm(before,ed.b):'?')+'".'}; break;
+      case 'UserMessaged': item = {who:'you', text:'"'+p.text+'"', raw:p.text, chat:true}; break;
+      case 'CoachResponded': item = {who:'coach', text:p.message, chat:true, batch:p.edit, traceBatch:p.batch}; break;
+      case 'CoachEditUndone': item = {who:'you', text:'Undid the coach\'s last change.'}; break;
+      case 'SessionFinished': item = {who:'sys', text:'Session finished at '+p.score+'%.'}; break;
+    }
+    if(item && item.who==='you' && e.actor==='coach') item.who = 'coach';
+    if(item){ item.seq = e.seq; item.ts = e.ts; out.push(item); }
+  });
+  return out;
+}
+function mermaidFrom(nodes, edges){
+  var ids = {}; nodes.forEach(function(n,i){ ids[n.id] = 'N'+(i+1); });
+  var lines = ['flowchart TD'];
+  nodes.forEach(function(n){
+    var l = String(n.label).replace(/"/g,"'");
+    lines.push('  '+ids[n.id]+(n.role==='db' ? '[("'+l+'")]' : n.role==='queue' ? '[["'+l+'"]]' : '["'+l+'"]'));
+  });
+  edges.forEach(function(e){ if(ids[e.a]&&ids[e.b]) lines.push('  '+ids[e.a]+' --> '+ids[e.b]); });
+  return lines.join('\n');
+}
+function boardMermaid(s){ var L = layout(s, 600); return mermaidFrom(L.order, s.edges); }
+function targetMermaid(P){
+  return mermaidFrom(P.nodes.map(function(n){return {id:n.id,role:n.role,label:n.label};}), P.edges.map(function(e){return {a:e[0],b:e[1]};}));
+}
+function projectReport(evs){
+  var s = reduce(evs), P = prob(s), ev = evaluate(s), steps = narrate(evs);
+  var lastJ = null; evs.forEach(function(e){ if(e.payload && e.payload.verdicts) lastJ = e.payload; });
+  var vd = lastJ ? {judge:lastJ.judge, list:lastJ.verdicts} : {judge:JUDGE, list:verdictsOf(s,ev)};
+  var hints = evs.filter(function(e){return e.type==='CoachResponded' && e.payload.hintKey;}).length;
+  var comps = P.nodes.map(function(t){ var uid = ev.usedT[t.id]; return {label:t.label, found:!!uid, why:t.why, ddia:t.ddia}; });
+  function tl(id){ return P.nodes.filter(function(x){return x.id===id;})[0].label; }
+  return {title:P.title, prompt:P.prompt, steps:steps, final:boardMermaid(s), target:targetMermaid(P), score:ev.score, verdicts:vd, comps:comps,
+    missingNodes:ev.missingNodes.map(function(t){return t.label;}),
+    missingEdges:ev.missingEdges.map(function(e){return tl(e[0])+' → '+tl(e[1]);}),
+    extraNodes:ev.extraNodes.map(function(n){return n.label;}),
+    stats:{events:evs.length, checks:s.checks, hints:hints, duration:elapsed(evs[evs.length-1].ts)}};
+}
+function tex(s){
+  var m = {'\\':'\\textbackslash{}','&':'\\&','%':'\\%','$':'\\$','#':'\\#','_':'\\_','{':'\\{','}':'\\}','~':'\\textasciitilde{}','^':'\\textasciicircum{}'};
+  return String(s).replace(/[\\&%$#_{}~^]/g,function(c){return m[c];}).replace(/→/g,'$\\rightarrow$').replace(/[^\x00-\x7F]/g,'?');
+}
+function reportLatex(r){
+  var L = [];
+  L.push('\\documentclass[11pt]{article}','\\usepackage[utf8]{inputenc}','\\usepackage[T1]{fontenc}','\\usepackage[margin=1in]{geometry}','\\usepackage{enumitem}','\\usepackage{graphicx}','');
+  L.push('\\title{'+tex(r.title)+': Study Guide}','\\date{\\today}','\\begin{document}','\\maketitle','');
+  L.push('\\section*{Problem}', tex(r.prompt), '');
+  L.push('\\section{How we got here}','\\begin{enumerate}[leftmargin=*]');
+  r.steps.forEach(function(st){ var who = st.who==='you'?'You':st.who==='coach'?'Coach':'Note'; L.push('  \\item[\\textbf{'+elapsed(st.ts)+'}] \\textbf{'+who+':} '+tex(st.text)); });
+  L.push('\\end{enumerate}','');
+  L.push('\\section{Your design, cleaned up}','% Render with: mmdc -i final.mmd -o final.pdf','% \\includegraphics[width=\\linewidth]{final.pdf}','\\begin{verbatim}',r.final,'\\end{verbatim}','');
+  L.push('\\section{Why each component}','\\begin{description}[leftmargin=*]');
+  r.comps.forEach(function(c){ L.push('  \\item['+tex(c.label)+(c.found?'':' (missed)')+'] '+tex(c.why)+(c.ddia?' \\emph{DDIA: '+tex(c.ddia)+'.}':'')); });
+  L.push('\\end{description}','');
+  L.push('\\section{Requirement check}','\\emph{Judge: '+tex(r.verdicts.judge)+'}','\\begin{itemize}');
+  r.verdicts.list.forEach(function(v){ L.push('  \\item \\textbf{'+tex(v.status)+'}: '+tex(v.need)+' \\emph{'+tex(v.reason)+'}'); });
+  L.push('\\end{itemize}','','\\section{Gaps}');
+  if(!r.missingNodes.length && !r.missingEdges.length && !r.extraNodes.length) L.push('No gaps against the reference design.');
+  else {
+    L.push('\\begin{itemize}');
+    r.missingNodes.forEach(function(x){ L.push('  \\item Missing component: '+tex(x)); });
+    r.missingEdges.forEach(function(x){ L.push('  \\item Missing connection: '+tex(x)); });
+    r.extraNodes.forEach(function(x){ L.push('  \\item Not in reference: '+tex(x)); });
+    L.push('\\end{itemize}');
+  }
+  L.push('','\\section{Reference design}','\\begin{verbatim}',r.target,'\\end{verbatim}','');
+  L.push('\\paragraph{Session} '+r.stats.events+' events, '+r.stats.checks+' coach replies, '+r.stats.hints+' hints, '+r.stats.duration+' total. Final score: '+r.score+'\\%.','','\\end{document}');
+  return L.join('\n');
+}
+function reportHtml(r){
+  var h = '<h3>'+esc(r.title)+': Study Guide</h3><div style="color:#555;font-size:13px">'+r.stats.events+' events, '+r.stats.checks+' coach replies, '+r.stats.hints+' hints, '+r.stats.duration+' total. Final score '+r.score+'%.</div>';
+  h += '<h2>Problem</h2><div>'+esc(r.prompt)+'</div><h2>How we got here</h2><ol>';
+  r.steps.forEach(function(st){ var who = st.who==='you'?'You':st.who==='coach'?'Coach':'Note'; h += '<li><span style="color:#555;font-size:13px">'+elapsed(st.ts)+'</span> <b>'+who+':</b> '+esc(st.text)+'</li>'; });
+  h += '</ol><h2>Your design, cleaned up</h2><div class="mm" id="mmFinal"></div><pre>'+esc(r.final)+'</pre><h2>Why each component</h2><ul>';
+  r.comps.forEach(function(c){ h += '<li><b>'+esc(c.label)+(c.found?'':' (missed)')+'</b>: '+esc(c.why)+(c.ddia?' <i>DDIA: '+esc(c.ddia)+'.</i>':'')+'</li>'; });
+  h += '</ul><h2>Requirement check</h2><div style="color:#555;font-size:13px">Judge: '+esc(r.verdicts.judge)+'</div><ul>';
+  r.verdicts.list.forEach(function(v){ h += '<li><b>'+esc(v.status)+'</b>: '+esc(v.need)+' <i>'+esc(v.reason)+'</i></li>'; });
+  h += '</ul><h2>Gaps</h2>';
+  if(!r.missingNodes.length && !r.missingEdges.length && !r.extraNodes.length) h += '<div>No gaps against the reference design.</div>';
+  else { h += '<ul>'; r.missingNodes.forEach(function(x){h+='<li>Missing component: '+esc(x)+'</li>';}); r.missingEdges.forEach(function(x){h+='<li>Missing connection: '+esc(x)+'</li>';}); r.extraNodes.forEach(function(x){h+='<li>Not in reference: '+esc(x)+'</li>';}); h += '</ul>'; }
+  h += '<h2>Reference design</h2><div class="mm" id="mmTarget"></div><pre>'+esc(r.target)+'</pre>';
+  return '<div class="paper">'+h+'</div>';
+}
+var mmState = 'idle', mmQueue = [];
+function renderMermaid(el, code){
+  if(!el) return;
+  function go(){ try{
+    window.mermaid.initialize({startOnLoad:false, theme:'default'});
+    window.mermaid.render('mm'+Math.random().toString(36).slice(2), code).then(function(r){ el.innerHTML = r.svg; }).catch(function(){});
+  }catch(e){} }
+  if(window.mermaid){ go(); return; }
+  mmQueue.push(go);
+  if(mmState==='idle'){
+    mmState = 'loading';
+    var sc = document.createElement('script');
+    sc.src = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
+    sc.onload = function(){ mmState='ready'; mmQueue.splice(0).forEach(function(f){f();}); };
+    sc.onerror = function(){ mmState='failed'; mmQueue=[]; };
+    document.head.appendChild(sc);
+  }
+}
+
+/* ============ Automatic layout: top to bottom, nothing to drag ============ */
+function shapeSvg(role,w,h,mini){
+  var sw = mini?1.4:1.4, i = sw/2+.5, W=w, H=h, d, extra='';
+  switch(role){
+    case 'client': d='M'+(H/2)+' '+i+'H'+(W-H/2)+'A'+(H/2-i)+' '+(H/2-i)+' 0 0 1 '+(W-H/2)+' '+(H-i)+'H'+(H/2)+'A'+(H/2-i)+' '+(H/2-i)+' 0 0 1 '+(H/2)+' '+i+'Z'; break;
+    case 'cache': var k=Math.min(16,W*.12); d='M'+(k+i)+' '+i+'H'+(W-i)+'L'+(W-k-i)+' '+(H-i)+'H'+i+'Z'; break;
+    case 'db': var ry=Math.min(8,H*.16); d='M'+i+' '+(ry+i)+'A'+(W/2-i)+' '+ry+' 0 0 1 '+(W-i)+' '+(ry+i)+'V'+(H-ry-i)+'A'+(W/2-i)+' '+ry+' 0 0 1 '+i+' '+(H-ry-i)+'Z'; extra='<path d="M'+i+' '+(ry+i)+'A'+(W/2-i)+' '+ry+' 0 0 0 '+(W-i)+' '+(ry+i)+'" fill="none" stroke="currentColor" stroke-width="'+sw+'"/>'; break;
+    case 'blob': var t=Math.min(12,W*.08); d='M'+i+' '+i+'H'+(W-i)+'L'+(W-t-i)+' '+(H-i)+'H'+(t+i)+'Z'; break;
+    case 'queue': var a2=Math.min(16,W*.12); d='M'+i+' '+i+'H'+(W-a2-i)+'L'+(W-i)+' '+(H/2)+'L'+(W-a2-i)+' '+(H-i)+'H'+i+'Z'; break;
+    case 'other': var hx=Math.min(14,W*.1); d='M'+(hx+i)+' '+i+'H'+(W-hx-i)+'L'+(W-i)+' '+(H/2)+'L'+(W-hx-i)+' '+(H-i)+'H'+(hx+i)+'L'+i+' '+(H/2)+'Z'; break;
+    default: d='M'+(8)+' '+i+'H'+(W-8)+'Q'+(W-i)+' '+i+' '+(W-i)+' '+(8)+'V'+(H-8)+'Q'+(W-i)+' '+(H-i)+' '+(W-8)+' '+(H-i)+'H'+8+'Q'+i+' '+(H-i)+' '+i+' '+(H-8)+'V'+8+'Q'+i+' '+i+' 8 '+i+'Z';
+  }
+  return '<svg class="shp'+(mini?' mini':'')+'" width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" aria-hidden="true" focusable="false"><path d="'+d+'" class="sf" stroke="currentColor" stroke-width="'+sw+'"/>'+extra+'</svg>';
+}
+var NH = 56, GAP = 10, ROWGAP = 52;
+/* Where a box sits when nobody has moved it: a simple grid in the order boxes were added. It never depends on the
+   arrows, so connecting two boxes can never rearrange the board. New boxes are pinned to a free slot when created. */
+var COLGAP = 64;
+function gridParams(W){
+  var nw = Math.max(92, Math.min(160, W)), cols = Math.max(1, Math.floor((W + COLGAP) / (nw + COLGAP)));
+  return {nw:nw, cols:cols, x0:Math.max(0, (W - (cols*nw + (cols-1)*COLGAP)) / 2)};
+}
+function slotLayout(s, W){
+  var g = gridParams(W), pos = {};
+  s.nodes.forEach(function(n,i){ pos[n.id] = {x:g.x0 + (i%g.cols)*(g.nw+COLGAP), y:Math.floor(i/g.cols)*(NH+ROWGAP)}; });
+  return {pos:pos, nw:g.nw, W:Math.max(W, g.nw), order:s.nodes};
+}
+function boardWidth(){ return Math.max(260, document.getElementById('boardWrap').clientWidth - 34); }
+function freeSlot(){
+  var s = state(), W = boardWidth(), g = gridParams(W), occ = [];
+  s.nodes.forEach(function(n){
+    if(n.fx===undefined) return;
+    occ.push({x:Math.min(1,Math.max(0,n.fx))*Math.max(0,W-g.nw), y:n.y});
+  });
+  for(var k=0; k<500; k++){
+    var x = g.x0 + (k%g.cols)*(g.nw+COLGAP), y = Math.floor(k/g.cols)*(NH+ROWGAP);
+    var clash = occ.some(function(o){ return Math.abs(o.x-x) < g.nw*0.7 && Math.abs(o.y-y) < NH*0.9; });
+    if(!clash) return {fx:Math.min(1, Math.max(0, x/Math.max(1, W-g.nw))), y:y};
+  }
+  return {fx:0, y:0};
+}
+function layout(s, W){
+  var ids = s.nodes.map(function(n){return n.id;}), out = {}, par = {}, deg = {}, depth = {}, touched = {}, order = [];
+  ids.forEach(function(id){ out[id]=[]; par[id]=[]; deg[id]=0; });
+  s.edges.forEach(function(e){ if(out[e.a] && deg[e.b]!==undefined){ out[e.a].push(e.b); par[e.b].push(e.a); deg[e.b]++; touched[e.a]=touched[e.b]=true; } });
+  var q = ids.filter(function(id){ return deg[id]===0 && touched[id]; });
+  q.forEach(function(id){ depth[id]=0; });
+  while(q.length){ var u = q.shift(); out[u].forEach(function(v){ depth[v] = Math.max(depth[v]||0, depth[u]+1); if(--deg[v]===0) q.push(v); }); }
+  var maxD = -1; ids.forEach(function(id){ if(depth[id]!==undefined) maxD = Math.max(maxD, depth[id]); });
+  ids.forEach(function(id){ if(depth[id]===undefined) depth[id] = maxD + 1; });   // cycles and unconnected go last
+  var rows = []; ids.forEach(function(id){ (rows[depth[id]] = rows[depth[id]] || []).push(id); });
+  rows = rows.filter(Boolean);
+  var idx = {};
+  rows.forEach(function(r,ri){
+    if(ri>0){
+      r.sort(function(a,b){
+        function bc(x){ var ps = par[x].filter(function(p){return idx[p]!==undefined;}); return ps.length ? ps.reduce(function(t,p){return t+idx[p];},0)/ps.length : 99; }
+        return bc(a)-bc(b);
+      });
+    }
+    r.forEach(function(id,i){ idx[id] = i; order.push(s.nodes.filter(function(n){return n.id===id;})[0]); });
+  });
+  var perRow = Math.max.apply(null, rows.map(function(r){return r.length;}).concat([1]));
+  var nw = Math.max(92, Math.min(170, Math.floor((W - GAP*(perRow-1)) / perRow)));
+  var Wc = Math.max(W, perRow*nw + GAP*(perRow-1));
+  var pos = {};
+  rows.forEach(function(r,ri){
+    var rw = r.length*nw + (r.length-1)*GAP, x0 = (Wc-rw)/2;
+    r.forEach(function(id,i){ pos[id] = {x:x0+i*(nw+GAP), y:ri*(NH+ROWGAP), row:ri}; });
+  });
+  return {pos:pos, nw:nw, W:Wc, H:rows.length ? rows.length*NH + (rows.length-1)*ROWGAP : 0, order:order};
+}
+
+/* ============ Free placement ============ */
+var curS = null, curPos = {}, curNw = 0, curW = 0;
+/* arrows attach to the four dots (ports) on each box: t(op) r(ight) b(ottom) l(eft). Ports are chosen by the
+   person who drags, or automatically from the relative position when none was chosen. */
+var NORM = {t:[0,-1], r:[1,0], b:[0,1], l:[-1,0]};
+function portPt(p, nw, port){
+  return port==='t' ? {x:p.x+nw/2, y:p.y} : port==='b' ? {x:p.x+nw/2, y:p.y+NH} : port==='l' ? {x:p.x, y:p.y+NH/2} : {x:p.x+nw, y:p.y+NH/2};
+}
+function autoPorts(a,b,nw){
+  var dx = (b.x+nw/2)-(a.x+nw/2), dy = (b.y+NH/2)-(a.y+NH/2);
+  if(Math.abs(dy) >= Math.abs(dx)*0.6) return dy>=0 ? ['b','t'] : ['t','b'];
+  return dx>=0 ? ['r','l'] : ['l','r'];
+}
+function curveTo(p1, n1, p2, n2){
+  var d = Math.hypot(p2.x-p1.x, p2.y-p1.y), k = Math.max(28, Math.min(110, d*0.42));
+  var c1 = {x:p1.x+n1[0]*k, y:p1.y+n1[1]*k};
+  var c2 = n2 ? {x:p2.x+n2[0]*k, y:p2.y+n2[1]*k} : p2;
+  return 'M'+p1.x+' '+p1.y+' C'+c1.x+' '+c1.y+' '+c2.x+' '+c2.y+' '+p2.x+' '+p2.y;
+}
+function edgePath(a,b,nw,pa,pb,shift){
+  var ap = autoPorts(a,b,nw); pa = pa||ap[0]; pb = pb||ap[1];
+  var p1 = portPt(a,nw,pa), p2 = portPt(b,nw,pb), n1 = NORM[pa], n2 = NORM[pb];
+  var len = Math.hypot(p2.x-p1.x, p2.y-p1.y); if(len<2) return '';
+  if(shift){ var ux = (p2.x-p1.x)/len, uy = (p2.y-p1.y)/len; p1 = {x:p1.x-uy*shift, y:p1.y+ux*shift}; p2 = {x:p2.x-uy*shift, y:p2.y+ux*shift}; }
+  p2 = {x:p2.x+n2[0]*1.5, y:p2.y+n2[1]*1.5};
+  return curveTo(p1, n1, p2, n2);
+}
+function edgesMarkup(){
+  return curS.edges.map(function(e){
+    var a = curPos[e.a], b = curPos[e.b]; if(!a||!b) return '';
+    var rev = curS.edges.some(function(o){return o.a===e.b && o.b===e.a;}), d = edgePath(a,b,curNw,e.pa,e.pb,rev?6:0), on = selEdge===e.id; if(!d) return '';
+    return '<path d="'+d+'" fill="none" stroke="'+(on?'var(--accent)':'var(--edge)')+'" stroke-width="'+(on?2:1.5)+'" marker-end="url(#'+(on?'ahSel':'ah')+')"/>'+
+      '<path d="'+d+'" fill="none" stroke="transparent" stroke-width="16" data-edge="'+e.id+'" style="pointer-events:stroke;cursor:pointer"/>';
+  }).join('');
+}
+function canvasHeight(){ var m = 0; Object.keys(curPos).forEach(function(id){ m = Math.max(m, curPos[id].y + NH); }); return Math.max(300, m + 60); }
+function moveNode(id, x, y){
+  var fx = Math.max(0, Math.min(1, x / Math.max(1, curW - curNw))), py = Math.max(0, Math.round(y));
+  var last = events[events.length-1], now = Date.now();
+  if(last.type==='NodeMoved' && last.payload.id===id && now-last.ts < 1500){ last.payload.fx = fx; last.payload.y = py; last.ts = now; }
+  else events.push({seq:events.length+1, ts:now, type:'NodeMoved', payload:{id:id, fx:fx, y:py}});
+  pendingFocus = id; render();
+}
+/* ============ Actions ============ */
+function addNode(role, label){
+  var seq = nextSeq(), id = 'n'+seq;
+  if(label===undefined){
+    var base = rl(role), same = state().nodes.filter(function(n){ return n.role===role; }).length;
+    label = same ? base+' '+(same+1) : base;
+  }
+  label = String(label).trim(); if(!label) return;
+  pendingFocus = 'NAME'; sel = id; selEdge = null; editing = true; connectFrom = null;
+  var slot = freeSlot();
+  dispatch('NodeAdded', {id:id, role:role, label:label, fx:slot.fx, y:slot.y});
+  say('Added '+label+' ('+rl(role)+').');
+  closeAdd();
+}
+var clip = null;
+function copyNode(){
+  var n = sel && state().nodes.filter(function(x){return x.id===sel;})[0];
+  if(!n) return false;
+  clip = {role:n.role, label:n.label}; say('Copied '+n.label+'.'); return true;
+}
+function pasteNode(){
+  if(!clip) return false;
+  var names = state().nodes.map(function(n){return n.label;}), label = clip.label.replace(/ copy( \d+)?$/,'')+' copy', k = 2;
+  while(names.indexOf(label)>=0) label = clip.label.replace(/ copy( \d+)?$/,'')+' copy '+(k++);
+  var id = 'n'+nextSeq(), slot = freeSlot();
+  sel = id; selEdge = null; editing = false; connectFrom = null; pendingFocus = id;
+  dispatch('NodeAdded', {id:id, role:clip.role, label:label, fx:slot.fx, y:slot.y});
+  say('Pasted '+label+'.'); return true;
+}
+function connect(a,b,pa,pb){
+  var s = state();
+  var have = s.edges.filter(function(e){return e.a===a&&e.b===b;})[0];
+  if(have){ sel = a; removeEdge(have.id); return; }
+  pendingFocus = a; sel = a;
+  dispatch('EdgeAdded', {id:'e'+nextSeq(), a:a, b:b, pa:pa||undefined, pb:pb||undefined});
+  say('Connected '+nm(s,a)+' to '+nm(s,b)+'.');
+}
+function removeNode(id){
+  var s = state(), name = nm(s,id); sel = null; selEdge = null; editing = false; connectFrom = null; pendingFocus = 'ADD';
+  dispatch('NodeDeleted', {id:id}); say('Removed '+name+'.');
+}
+function removeEdge(id){
+  var s = state(), e = s.edges.filter(function(x){return x.id===id;})[0]; if(!e) return;
+  selEdge = null; pendingFocus = e.a;
+  dispatch('EdgeDeleted', {id:id}); say('Removed connection from '+nm(s,e.a)+' to '+nm(s,e.b)+'.');
+}
+/* ============ Coach edits as a ReAct loop ============
+   Think -> Act (one tool call) -> Observe (code validates and scores the draft) -> repeat.
+   Everything happens on a DRAFT copy. Only if the loop ends with finish() are the changes committed as one batch of
+   events marked actor:'coach'; if it runs out of steps nothing is committed. Every step is stored as a CoachStep event.
+   The "model" below is a scripted stand-in; a real model would return the same {thought, tool, args} objects. */
+var STEP_CAP = 6;
+var STORES = ['cache','db','blob'], INTERNAL = ['db','cache','blob','queue'];
+function edgeRule(D, aId, bId){
+  var a = D.nodes.filter(function(n){return n.id===aId;})[0], b = D.nodes.filter(function(n){return n.id===bId;})[0];
+  if(aId===bId) return 'a box cannot connect to itself.';
+  if(D.edges.some(function(e){return e.a===aId && e.b===bId;})) return 'those two are already connected that way.';
+  var ra = semRole(a), rb = semRole(b);
+  if(rb==='client') return 'an arrow into a client is not needed; responses travel back along the same path.';
+  if(STORES.indexOf(ra)>=0 && ['client','service','queue'].indexOf(rb)>=0)
+    return '"'+a.label+'" is a data store, so it does not call "'+b.label+'". Point the arrow at the store instead.';
+  if(ra==='client' && INTERNAL.indexOf(rb)>=0) return 'a client should not talk to "'+b.label+'" directly; go through a server.';
+  return null;
+}
+function fmtCall(tool, args){ return tool+'('+Object.keys(args||{}).map(function(k){return JSON.stringify(args[k]);}).join(', ')+')'; }
+
+function scriptedModel(D, ctx){
+  var ev = evaluate(D), P = prob(D), last = ctx.last, all = ctx.mode==='all';
+  function tn(id){ return P.nodes.filter(function(x){return x.id===id;})[0]; }
+  function candidateEdge(){
+    for(var i=0;i<ev.missingEdges.length;i++){
+      var e = ev.missingEdges[i];
+      if(!ev.usedT[e[0]] || !ev.usedT[e[1]]) continue;
+      if(all) return e;
+      if(ctx.focusKind==='node' && (ctx.focusT.indexOf(e[0])>=0 || ctx.focusT.indexOf(e[1])>=0)) return e;
+      if(ctx.focusKind==='pair' && ctx.focusT.indexOf(e[0])>=0 && ctx.focusT.indexOf(e[1])>=0) return e;
+    }
+    return null;
+  }
+  function edgeAction(e){
+    var src = ev.usedT[e[0]], dst = ev.usedT[e[1]], key = e[0]+'>'+e[1];
+    /* a small model often draws the arrow backwards; do that only when the validator will catch it, so recovery is visible */
+    if(!ctx.tried[key] && edgeRule(D,dst,src)!==null){
+      ctx.tried[key] = true; ctx.retry = {from:src, to:dst};
+      return {thought:'Connect "'+nm(D,src)+'" and "'+nm(D,dst)+'".', tool:'add_edge', args:{from:dst, to:src}};
+    }
+    ctx.tried[key] = true;
+    return {thought:'Connect "'+nm(D,src)+'" to "'+nm(D,dst)+'".', tool:'add_edge', args:{from:src, to:dst}};
+  }
+  function wrongAction(w){
+    ctx.focusKind = 'pair'; ctx.focusT = [ev.assign[w.a], ev.assign[w.b]];
+    return {thought:'The arrow between "'+nm(D,w.a)+'" and "'+nm(D,w.b)+'" points the wrong way. Remove it, then draw it correctly.', tool:'remove_edge', args:{from:w.a, to:w.b}};
+  }
+  function finishAction(){
+    var msg = ctx.applied.length ? ctx.applied.join(', ') : 'there was nothing left to add';
+    msg = msg.charAt(0).toUpperCase()+msg.slice(1)+'.';
+    return {thought: ctx.applied.length ? 'That piece is in place. Final check, then finish.' : 'Nothing is missing.', tool:'finish', args:{message:msg}};
+  }
+  if(last && last.tool==='add_edge' && !last.ok && ctx.retry){
+    var r = ctx.retry; ctx.retry = null;
+    return {thought:'That direction was rejected, so I will flip it.', tool:'add_edge', args:{from:r.from, to:r.to}};
+  }
+  if(ctx.preferFix && ev.wrong.length && !ctx.focusKind) return wrongAction(ev.wrong[0]);
+  var ce = candidateEdge(); if(ce) return edgeAction(ce);
+  if(!all && ctx.focusKind) return finishAction();
+  if(ev.missingNodes.length){
+    var best = null, bs = -1;
+    ev.missingNodes.forEach(function(t,i){
+      var links = P.edges.filter(function(e){ return (e[0]===t.id && ev.usedT[e[1]]) || (e[1]===t.id && ev.usedT[e[0]]); }).length;
+      if(links*10 - i > bs){ bs = links*10 - i; best = t; }
+    });
+    if(best.ddia && !ctx.searched[best.id]){
+      ctx.searched[best.id] = true;
+      return {thought:'Next missing piece: '+best.label+'. Let me check the notes first.', tool:'search_notes', args:{query:best.ddia}};
+    }
+    ctx.focusKind = 'node'; ctx.focusT = [best.id]; ctx.why = ctx.why || best.why;
+    return {thought:'Next missing piece: '+best.label+'. '+best.why, tool:'add_node', args:{type:best.role, label:best.label}};
+  }
+  for(var i=0;i<ev.missingEdges.length;i++){
+    var e = ev.missingEdges[i];
+    if(ev.usedT[e[0]] && ev.usedT[e[1]]){ ctx.focusKind = 'pair'; ctx.focusT = [e[0], e[1]]; return edgeAction(e); }
+  }
+  if(ev.wrong.length && !ctx.focusKind) return wrongAction(ev.wrong[0]);
+  return finishAction();
+}
+
+function runCoachLoop(mode, preferFix){
+  var base = state(), D = JSON.parse(JSON.stringify(base)), batch = 'b'+nextSeq(), baseScore = evaluate(base).score;
+  var ops = [], steps = [], dcount = 0, ecount = 0, finished = null;
+  var ctx = {mode:mode, preferFix:preferFix, tried:{}, searched:{}, applied:[], focusKind:null, focusT:[], last:null, retry:null, why:''};
+  function ref(r){
+    var m = D.nodes.filter(function(n){return n.id===r;});
+    if(!m.length) m = D.nodes.filter(function(n){return n.label.toLowerCase()===String(r).toLowerCase();});
+    if(m.length===1) return m[0];
+    return {error: m.length ? 'rejected: "'+r+'" matches more than one box; use its id.' : 'rejected: no box called "'+r+'". Boxes: '+D.nodes.map(function(n){return n.id+'='+n.label;}).join(', ')+'.'};
+  }
+  var tools = {
+    read_board: function(){
+      return {ok:true, obs:'Boxes: '+(D.nodes.map(function(n){return n.id+'="'+n.label+'" ('+rl(n.role)+')';}).join('; ')||'none')+'. Arrows: '+(D.edges.map(function(e){return nm(D,e.a)+' → '+nm(D,e.b);}).join('; ')||'none')+'.'};
+    },
+    search_notes: function(a){ return {ok:true, obs:'Found a DDIA section on "'+a.query+'". (Stub: a real version returns the passage.)'}; },
+    add_node: function(a){
+      if(!ROLES[a.type]) return {ok:false, obs:'rejected: unknown type "'+a.type+'". Known types: '+Object.keys(ROLES).join(', ')+'.'};
+      var label = String(a.label||'').trim(); if(!label) return {ok:false, obs:'rejected: the label is empty.'};
+      var before = evaluate(D).score, id = 'd'+(++dcount);
+      D.nodes.push({id:id, role:a.type, label:label}); ops.push({t:'node', tid:id, role:a.type, label:label});
+      var after = evaluate(D).score;
+      return {ok:true, applied:'added "'+label+'"', obs:'ok. Added "'+label+'" ('+rl(a.type)+'). Score '+before+'% → '+after+'%.'+(after===before?' It matches no missing requirement.':'')};
+    },
+    add_edge: function(a){
+      var f = ref(a.from), t = ref(a.to); if(f.error) return {ok:false, obs:f.error}; if(t.error) return {ok:false, obs:t.error};
+      var bad = edgeRule(D, f.id, t.id); if(bad) return {ok:false, obs:'rejected: '+bad};
+      var before = evaluate(D).score, id = 'x'+(++ecount);
+      D.edges.push({id:id, a:f.id, b:t.id}); ops.push({t:'edge', a:f.id, b:t.id, did:id});
+      var after = evaluate(D).score;
+      return {ok:true, applied:'connected "'+f.label+'" → "'+t.label+'"', obs:'ok. Connected "'+f.label+'" → "'+t.label+'". Score '+before+'% → '+after+'%.'+(after===before?' That arrow is not in the reference design.':'')};
+    },
+    remove_edge: function(a){
+      var f = ref(a.from), t = ref(a.to); if(f.error) return {ok:false, obs:f.error}; if(t.error) return {ok:false, obs:t.error};
+      var e = D.edges.filter(function(x){return x.a===f.id && x.b===t.id;})[0]; if(!e) return {ok:false, obs:'rejected: there is no arrow from "'+f.label+'" to "'+t.label+'".'};
+      D.edges = D.edges.filter(function(x){return x!==e;});
+      if(e.id.charAt(0)==='x') ops = ops.filter(function(o){return o.did!==e.id;}); else ops.push({t:'unedge', id:e.id, a:e.a, b:e.b});
+      return {ok:true, applied:'removed the arrow "'+f.label+'" → "'+t.label+'"', obs:'ok. Removed "'+f.label+'" → "'+t.label+'".'};
+    },
+    finish: function(a){
+      var sc = evaluate(D).score;
+      if(sc < baseScore) return {ok:false, obs:'rejected: the score dropped from '+baseScore+'% to '+sc+'%. Undo something first.'};
+      return {ok:true, obs:'ok. Final score '+sc+'%. Committing.'};
+    }
+  };
+
+  for(var n=1; n<=STEP_CAP && finished===null; n++){
+    var act = scriptedModel(D, ctx), res = tools[act.tool](act.args);
+    ctx.last = {tool:act.tool, ok:res.ok};
+    if(res.ok && res.applied) ctx.applied.push(res.applied);
+    steps.push(n);
+    append('CoachStep', {batch:batch, n:n, thought:act.thought, call:fmtCall(act.tool, act.args), ok:res.ok, obs:res.obs}, 'coach');
+    if(act.tool==='finish' && res.ok) finished = act.args.message;
+  }
+  if(finished===null){
+    append('CoachResponded', {kind:'ack', batch:batch, message:'I ran out of steps ('+STEP_CAP+') before reaching a valid finish, so I left the board exactly as it was. Try asking for one piece at a time, for example "add the next piece".'});
+    render(); say('The coach could not finish, and changed nothing.'); return;
+  }
+  var map = {};
+  ops.forEach(function(o){
+    if(o.t==='node'){ var nid = 'n'+nextSeq(); map[o.tid] = nid; var sl = freeSlot(); append('NodeAdded', {id:nid, role:o.role, label:o.label, fx:sl.fx, y:sl.y, batch:batch}, 'coach'); }
+    else if(o.t==='edge') append('EdgeAdded', {id:'e'+nextSeq(), a:map[o.a]||o.a, b:map[o.b]||o.b, batch:batch}, 'coach');
+    else append('EdgeDeleted', {id:o.id, a:o.a, b:o.b, batch:batch}, 'coach');
+  });
+  var s2 = state(), ev2 = evaluate(s2);
+  append('CoachResponded', {kind:ops.length?'edit':'reply', edit:ops.length?batch:undefined, batch:batch, judge:JUDGE, verdicts:verdictsOf(s2,ev2),
+    message:finished+(ctx.why?' '+ctx.why:'')+' Progress: '+ev2.score+'%.'});
+  render(); say(ops.length ? 'The coach changed the board.' : 'The coach found nothing to change.');
+}
+function doCoachEdit(preferFix, mode){ runCoachLoop(mode||'piece', !!preferFix); }
+function undoBatch(batch){
+  var s = state(); if(s.undone[batch]) return;
+  events.filter(function(e){ return e.actor==='coach' && e.payload.batch===batch; }).reverse().forEach(function(e){
+    var p = e.payload;
+    if(e.type==='NodeAdded') append('NodeDeleted', {id:p.id, silent:true});
+    else if(e.type==='EdgeAdded') append('EdgeDeleted', {id:p.id, silent:true});
+    else if(e.type==='EdgeDeleted') append('EdgeAdded', {id:'e'+nextSeq(), a:p.a, b:p.b, pa:p.pa, pb:p.pb, silent:true});
+  });
+  append('CoachEditUndone', {batch:batch});
+  append('CoachResponded', {kind:'ack', message:'Okay, I undid that.'});
+  render(); say('Undid the coach change.');
+}
+/* Stand-in: replies are driven by the board, not by understanding the text. A model would read the message. */
+function doChat(text){
+  text = String(text||'').trim(); if(!text) return false;
+  dispatch('UserMessaged', {text:text});
+  if(/\b(add it|add that|draw it|draw that|do it|fix it|for me|go ahead|you add|you draw|apply|everything|build the whole)\b/i.test(text)){ doCoachEdit(/\bfix\b/i.test(text), /\b(everything|whole|all of it|entire|the rest)\b/i.test(text) ? 'all' : 'piece'); return true; }
+  var wants = /hint|stuck|help|\?|what|how|why|next|where|which|should|idea|check/i.test(text);
+  dispatch('CoachResponded', coachReply(state(), wants));
+  return true;
+}
+function doFinish(){
+  var s = state(), last = events[events.length-1];
+  if(last.type!=='SessionFinished') dispatch('SessionFinished', {score:evaluate(s).score, judge:JUDGE, verdicts:verdictsOf(s,evaluate(s))});
+  reportOpen = true; render();
+  document.getElementById('reportH').focus();
+}
+function loadProblem(id, fresh){
+  if(current) sessions[current] = events;
+  current = id;
+  events = (!fresh && sessions[id]) ? sessions[id] : [];
+  if(!events.length){
+    events.push({seq:1, ts:Date.now(), type:'ProblemLoaded', payload:{problemId:id}});
+    events.push({seq:2, ts:Date.now(), type:'CoachResponded', payload:{kind:'opening', message:'Let\'s work through "'+prob({problemId:id}).title+'".'}});
+  }
+  sel = null; selEdge = null; editing = false; connectFrom = null; reportOpen = false; typeSig = ''; chatCount = 0; document.getElementById('coach').innerHTML = '';
+  render();
+}
+
+/* ============ Rendering ============ */
+function handleHtml(n, p, nw){
+  var on = connectFrom===n.id;
+  return '<span class="hs'+(on?' on':'')+(sel===n.id?' sel':'')+'" data-hs="'+n.id+'" aria-hidden="true">'+['t','r','b','l'].map(function(k){
+    var q = portPt(p, nw, k);
+    return '<span class="handle" data-act="connect" data-for="'+n.id+'" data-port="'+k+'" style="left:'+(q.x-6)+'px;top:'+(q.y-6)+'px"></span>';
+  }).join('')+'</span>';
+}
+function placeHandles(id, p){
+  Array.prototype.forEach.call(document.querySelectorAll('.handle[data-for="'+id+'"]'), function(h){
+    var q = portPt(p, curNw, h.dataset.port); h.style.left = (q.x-6)+'px'; h.style.top = (q.y-6)+'px';
+  });
+}
+function renderBoard(s){
+  var el = document.getElementById('board'), W = boardWidth();
+  curS = s;
+  if(!s.nodes.length){
+    curPos = {}; el.style.width = 'auto'; el.style.height = 'auto';
+    el.innerHTML = ''; return;
+  }
+  var L = slotLayout(s, W); curNw = L.nw; curW = L.W; curPos = {};
+  s.nodes.forEach(function(n){
+    var a = L.pos[n.id];
+    curPos[n.id] = (n.fx!==undefined) ? {x:Math.min(1,Math.max(0,n.fx))*Math.max(0,L.W-L.nw), y:n.y} : {x:a.x, y:a.y};
+  });
+  var H = canvasHeight();
+  var svg = '<svg id="edgeSvg" width="'+L.W+'" height="'+H+'" style="position:absolute;left:0;top:0;pointer-events:none" aria-hidden="true" focusable="false"><defs><marker id="ah" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.5,1 L10,5 L0.5,9 z" fill="var(--edge)"/></marker><marker id="ahSel" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.5,1 L10,5 L0.5,9 z" fill="var(--accent)"/></marker></defs><g id="edgeLayer">'+edgesMarkup()+'</g></svg>';
+  var btns = '';
+  s.nodes.forEach(function(n){
+    var p = curPos[n.id];
+    var outs = s.edges.filter(function(e){return e.a===n.id;}).map(function(e){return nm(s,e.b);});
+    var ins = s.edges.filter(function(e){return e.b===n.id;}).map(function(e){return nm(s,e.a);});
+    var desc = n.label+', '+rl(n.role)+'. '+(outs.length?'Sends to '+outs.join(', ')+'. ':'')+(ins.length?'Receives from '+ins.join(', ')+'. ':'')+(!outs.length&&!ins.length?'Not connected. ':'');
+    if(connectFrom && connectFrom!==n.id) desc += 'Press to draw an arrow from '+nm(s,connectFrom)+' to this.';
+    else if(connectFrom===n.id) desc += 'Connecting from here. Press to cancel.';
+    var cls = 'node' + (connectFrom && connectFrom!==n.id ? ' target' : '') + (editing && sel===n.id ? ' editing' : '');
+    var ov = handleHtml(n, p, L.nw);
+    if(sel===n.id && editing){
+      var ny = p.y + (n.role==='db' ? 29 : 25);
+      ov += '<input id="nameInp" class="nodeName" type="text" aria-label="Name" data-for="'+n.id+'" value="'+esc(n.label)+'" style="left:'+(p.x+20)+'px;top:'+ny+'px;width:'+Math.max(40,L.nw-40)+'px">';
+    }
+    btns += '<button class="'+cls+'" data-node="'+n.id+'" aria-pressed="'+(sel===n.id)+'" aria-describedby="moveHelp" aria-keyshortcuts="Enter F2 Delete C Control+C Control+V" aria-label="'+esc(desc)+'" data-role="'+n.role+'" style="left:'+p.x+'px;top:'+p.y+'px;width:'+L.nw+'px;height:'+NH+'px">'+shapeSvg(n.role,L.nw,NH)+'<small>'+esc(rl(n.role))+'</small><span>'+esc(n.label)+'</span></button>'+ov;
+  });
+  el.style.width = L.W+'px'; el.style.height = H+'px';
+  el.innerHTML = svg + btns;
+}
+function renderCtx(){}
+function traceHtml(batch){
+  var st = events.filter(function(e){return e.type==='CoachStep' && e.payload.batch===batch;});
+  if(!st.length) return '';
+  return '<details><summary>Show steps ('+st.length+')</summary><ol class="trace">'+st.map(function(e){ var p = e.payload;
+    return '<li><div><b>Thought:</b> '+esc(p.thought)+'</div><div><b>Action:</b> <code>'+esc(p.call)+'</code></div><div><b>Observation:</b> '+esc(p.obs)+'</div></li>';
+  }).join('')+'</ol></details>';
+}
+var chatCount = 0;
+function renderCoach(){
+  var items = narrate(events).filter(function(i){return i.chat;}), el = document.getElementById('coach');
+  if(items.length < chatCount || el.children.length !== chatCount){ el.innerHTML = ''; chatCount = 0; }
+  items.slice(chatCount).forEach(function(i){
+    var d = document.createElement('div'); d.className = 'msg '+i.who;
+    d.innerHTML = '<span class="sr">'+(i.who==='coach'?'Coach: ':'You: ')+'</span>'+esc(i.who==='you' ? i.raw : i.text)+(i.traceBatch ? traceHtml(i.traceBatch) : '')+(i.batch ? '<div><button class="link" data-undo="'+i.batch+'" aria-label="Undo the coach\'s change">Undo</button></div>' : '');
+    el.appendChild(d);
+  });
+  var undone = state().undone;
+  Array.prototype.forEach.call(el.querySelectorAll('[data-undo]'), function(b){ b.hidden = !!undone[b.dataset.undo]; });
+  chatCount = items.length; el.scrollTop = el.scrollHeight;
+}
+function renderMore(s){
+  document.getElementById('mmSrc').textContent = s.nodes.length ? boardMermaid(s) : '(empty board)';
+  document.getElementById('evLog').textContent = events.map(function(e){ return JSON.stringify({seq:e.seq, actor:e.actor||'user', type:e.type, payload:e.payload}); }).join('\n');
+}
+function renderReport(){
+  var r = projectReport(events);
+  document.getElementById('reportBody').innerHTML = reportHtml(r);
+  document.getElementById('texSrc').value = reportLatex(r);
+  renderMermaid(document.getElementById('mmFinal'), r.final);
+  renderMermaid(document.getElementById('mmTarget'), r.target);
+}
+var typeSig = '';
+function syncSeg(id){
+  Array.prototype.forEach.call(document.querySelectorAll('#seg [role=radio]'), function(b){ var on = b.dataset.id===id; b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1; });
+}
+function syncRove(container, itemSel){
+  var items = Array.prototype.filter.call(container.querySelectorAll(itemSel), function(x){return !x.hidden;});
+  var cur = items.filter(function(x){return x.tabIndex===0;})[0] || items[0];
+  Array.prototype.forEach.call(container.querySelectorAll(itemSel), function(x){ x.tabIndex = (x===cur) ? 0 : -1; });
+}
+function rove(container, itemSel, select){
+  container.addEventListener('keydown', function(e){
+    var items = Array.prototype.filter.call(container.querySelectorAll(itemSel), function(x){return !x.hidden;});
+    var i = items.indexOf(document.activeElement); if(i<0) return;
+    var n = null;
+    if(e.key==='ArrowRight'||e.key==='ArrowDown') n = items[(i+1)%items.length];
+    else if(e.key==='ArrowLeft'||e.key==='ArrowUp') n = items[(i-1+items.length)%items.length];
+    else if(e.key==='Home') n = items[0]; else if(e.key==='End') n = items[items.length-1];
+    if(n){ e.preventDefault(); n.tabIndex = 0; items.forEach(function(x){ if(x!==n) x.tabIndex = -1; }); n.focus(); if(select) n.click(); }
+  });
+}
+function render(){
+  var s = state(), P = prob(s);
+  CUSTOM = s.types;
+  document.getElementById('designView').hidden = reportOpen;
+  document.getElementById('reportView').hidden = !reportOpen;
+  document.getElementById('finishBtn').hidden = reportOpen;
+  document.getElementById('prompt').textContent = P.prompt;
+  syncSeg(P.id);
+  document.getElementById('tidyBtn').hidden = s.nodes.length<2 || !s.edges.length;
+  syncRove(document.getElementById('toolbar'), '.btn');
+  if(reportOpen){ renderReport(); return; }
+  renderBoard(s); renderCtx(s); renderCoach(); renderMore(s);
+  if(pendingFocus){
+    var f = pendingFocus === 'ADD' ? document.getElementById('addBtn') : pendingFocus === 'NAME' ? document.getElementById('nameInp') : document.querySelector('[data-node="'+pendingFocus+'"]');
+    if(f && f.focus){ f.focus(); if(pendingFocus==='NAME' && f.select) f.select(); }
+    pendingFocus = null;
+  }
+}
+
+/* ---- component picker: a small searchable popup (type to filter, arrows to move, Enter to choose, Escape to close) ---- */
+var pickActive = 0, pickItems = [], pickRole = null;
+function pickerOptions(q){
+  var ql = q.trim().toLowerCase();
+  return Object.keys(ROLES).map(function(k){ return {id:k, label:ROLES[k].label, hint:ROLES[k].hint, color:ROLES[k].color}; })
+    .filter(function(o){ return !ql || o.label.toLowerCase().indexOf(ql)>=0 || o.hint.toLowerCase().indexOf(ql)>=0; });
+}
+function renderPicker(){
+  var inp = document.getElementById('pickInp'), list = document.getElementById('pickList');
+  pickItems = pickerOptions(inp.value);
+  if(pickActive >= pickItems.length) pickActive = pickItems.length-1;
+  if(pickActive < 0) pickActive = 0;
+  list.innerHTML = pickItems.map(function(o,i){
+    return '<li role="option" id="po'+i+'" data-i="'+i+'" aria-selected="'+(i===pickActive)+'">'+shapeSvg(o.id,26,18,true)+'<span>'+esc(o.label)+'</span><small>'+esc(o.hint)+'</small></li>';
+  }).join('');
+  inp.setAttribute('aria-activedescendant', pickItems.length ? 'po'+pickActive : '');
+  var act = document.getElementById('po'+pickActive); if(act && act.scrollIntoView) try{ act.scrollIntoView({block:'nearest'}); }catch(_){}
+}
+function openPicker(){
+  var inp = document.getElementById('pickInp');
+  pickRole = null;
+  document.getElementById('picker').hidden = false; document.getElementById('addBtn').setAttribute('aria-expanded','true');
+  inp.value = ''; pickActive = 0; renderPicker(); inp.focus();
+}
+function pickChoose(i){ var o = pickItems[i]; if(o) addNode(o.id); }
+function closeAdd(){
+  pickRole = null;
+  document.getElementById('picker').hidden = true; document.getElementById('addBtn').setAttribute('aria-expanded','false');
+}
+
+/* ============ Wiring ============ */
+(function init(){
+  var seg = document.getElementById('seg');
+  PROBLEMS.forEach(function(p){ var b = document.createElement('button'); b.type = 'button'; b.setAttribute('role','radio'); b.dataset.id = p.id; b.textContent = SHORT[p.id] || p.title; seg.appendChild(b); });
+  seg.addEventListener('click', function(e){ var b = e.target.closest('[role=radio]'); if(b && b.dataset.id !== current) loadProblem(b.dataset.id); });
+  rove(seg, '[role=radio]', true);
+  rove(document.getElementById('toolbar'), '.btn', false);
+
+  var picker = document.getElementById('picker'), pinp = document.getElementById('pickInp'), plist = document.getElementById('pickList');
+  document.getElementById('addBtn').onclick = function(){ if(picker.hidden) openPicker(); else closeAdd(); };
+  pinp.addEventListener('input', function(){ pickActive = 0; renderPicker(); });
+  pinp.addEventListener('keydown', function(e){
+    if(e.key==='ArrowDown'){ e.preventDefault(); pickActive = Math.min(pickItems.length-1, pickActive+1); renderPicker(); }
+    else if(e.key==='ArrowUp'){ e.preventDefault(); pickActive = Math.max(0, pickActive-1); renderPicker(); }
+    else if(e.key==='Home'){ e.preventDefault(); pickActive = 0; renderPicker(); }
+    else if(e.key==='End'){ e.preventDefault(); pickActive = Math.max(0, pickItems.length-1); renderPicker(); }
+    else if(e.key==='Enter'){ e.preventDefault(); pickChoose(pickActive); }
+  });
+  plist.addEventListener('mousedown', function(e){ e.preventDefault(); });
+  plist.addEventListener('click', function(e){ var li = e.target.closest('[data-i]'); if(li) pickChoose(+li.dataset.i); });
+  document.addEventListener('click', function(e){ if(!picker.hidden && !picker.contains(e.target) && !e.target.closest('#addBtn')) closeAdd(); });
+  document.getElementById('tidyBtn').onclick = function(){
+    var st = state(), W = boardWidth(), L = layout(st, W), pos = {};
+    st.nodes.forEach(function(n){ var q = L.pos[n.id]; pos[n.id] = {fx: Math.min(1, Math.max(0, q.x / Math.max(1, L.W - L.nw))), y:Math.round(q.y)}; });
+    dispatch('LayoutReset', {pos:pos}); say('Layout tidied.');
+  };
+
+  /* drag to move; arrow keys move the focused box */
+  var bd = document.getElementById('board'), drag = null, justDragged = false;
+  var link = null;
+  /* the whole box is a drop target: anything within SNAP px of a box snaps to its nearest dot */
+  var SNAP = 28;
+  function snapPort(px, py, from, sx, sy){
+    var best = null, bd2 = 1e9;
+    Object.keys(curPos).forEach(function(id){
+      if(id===from) return;
+      var p = curPos[id], dx = Math.max(p.x-px, 0, px-(p.x+curNw)), dy = Math.max(p.y-py, 0, py-(p.y+NH)), d = Math.sqrt(dx*dx+dy*dy);
+      if(d<=SNAP && d<bd2){ bd2 = d; best = id; }
+    });
+    if(!best) return null;
+    /* dropped on the box itself: use the dot that faces where the arrow came from; dropped beside it: the nearest dot */
+    var bp = null, bdist = 1e9, P = curPos[best], inside = px>=P.x && px<=P.x+curNw && py>=P.y && py<=P.y+NH;
+    var rx = inside ? sx : px, ry = inside ? sy : py;
+    ['t','r','b','l'].forEach(function(k){ var q = portPt(P, curNw, k), dd = Math.hypot(q.x-rx, q.y-ry); if(dd<bdist){ bdist = dd; bp = k; } });
+    return {id:best, port:bp};
+  }
+  bd.addEventListener('pointerdown', function(e){
+    var hnd = e.target.closest('[data-act=connect]');
+    if(hnd && !(e.button && e.button>0)){
+      var fid = hnd.dataset['for'], port = hnd.dataset.port, p0 = curPos[fid]; if(!p0) return;
+      e.preventDefault();
+      var q0 = portPt(p0, curNw, port);
+      link = {from:fid, port:port, sx:e.clientX, sy:e.clientY, moved:false, x0:q0.x, y0:q0.y, snap:null};
+      try{ hnd.setPointerCapture(e.pointerId); }catch(_){}
+      return;
+    }
+    var b = e.target.closest('[data-node]'); if(!b || (e.button && e.button>0)) return;
+    var p = curPos[b.dataset.node]; if(!p) return;
+    drag = {id:b.dataset.node, el:b, sx:e.clientX, sy:e.clientY, ox:p.x, oy:p.y, moved:false};
+    try{ b.setPointerCapture(e.pointerId); }catch(_){}
+  });
+  bd.addEventListener('pointermove', function(e){
+    if(link){
+      var dx0 = e.clientX-link.sx, dy0 = e.clientY-link.sy;
+      if(!link.moved && Math.abs(dx0)+Math.abs(dy0) < 6) return;
+      link.moved = true; bd.classList.add('linking');
+      var sv = document.getElementById('edgeSvg'), r = bd.getBoundingClientRect();
+      var px = e.clientX-r.left, py = e.clientY-r.top;
+      link.snap = snapPort(px, py, link.from, link.x0, link.y0);
+      Array.prototype.forEach.call(bd.querySelectorAll('.snap'), function(x){ x.classList.remove('snap'); });
+      var p1 = {x:link.x0, y:link.y0}, n1 = NORM[link.port], p2 = {x:px, y:py}, n2 = null;
+      if(link.snap){
+        var tb = bd.querySelector('[data-node="'+link.snap.id+'"]'); if(tb) tb.classList.add('snap');
+        var th = bd.querySelector('.handle[data-for="'+link.snap.id+'"][data-port="'+link.snap.port+'"]'); if(th) th.classList.add('snap');
+        p2 = portPt(curPos[link.snap.id], curNw, link.snap.port); n2 = NORM[link.snap.port]; p2 = {x:p2.x+n2[0]*1.5, y:p2.y+n2[1]*1.5};
+      }
+      var rb = document.getElementById('rubber');
+      if(!rb && sv){ rb = document.createElementNS('http://www.w3.org/2000/svg','path'); rb.setAttribute('id','rubber'); rb.setAttribute('class','rubber'); rb.setAttribute('fill','none'); rb.setAttribute('stroke','var(--accent)'); rb.setAttribute('stroke-width','2'); rb.setAttribute('marker-end','url(#ahSel)'); sv.appendChild(rb); }
+      if(rb) rb.setAttribute('d', curveTo(p1, n1, p2, n2));
+      return;
+    }
+    if(!drag) return;
+    var dx = e.clientX-drag.sx, dy = e.clientY-drag.sy;
+    if(!drag.moved && Math.abs(dx)+Math.abs(dy) < 8) return;
+    drag.moved = true;
+    drag.x = Math.max(0, Math.min(curW-curNw, drag.ox+dx)); drag.y = Math.max(0, drag.oy+dy);
+    drag.el.style.left = drag.x+'px'; drag.el.style.top = drag.y+'px';
+    placeHandles(drag.id, {x:drag.x, y:drag.y});
+    curPos[drag.id] = {x:drag.x, y:drag.y};
+    var g = document.getElementById('edgeLayer'); if(g) g.innerHTML = edgesMarkup();
+    var H = canvasHeight(); bd.style.height = H+'px'; var sv = document.getElementById('edgeSvg'); if(sv) sv.setAttribute('height', H);
+  });
+  function endDrag(){
+    if(!drag) return;
+    var d = drag; drag = null;
+    if(d.moved){ justDragged = true; setTimeout(function(){ justDragged = false; }, 60); moveNode(d.id, d.x, d.y); }
+  }
+  bd.addEventListener('pointerup', function(e){
+    if(link){
+      var l = link; link = null;
+      var rb = document.getElementById('rubber'); if(rb) rb.remove();
+      bd.classList.remove('linking');
+      Array.prototype.forEach.call(bd.querySelectorAll('.snap'), function(x){ x.classList.remove('snap'); });
+      if(l.moved){
+        justDragged = true; setTimeout(function(){ justDragged = false; }, 60);
+        if(l.snap && l.snap.id!==l.from) connect(l.from, l.snap.id, l.port, l.snap.port);
+      }
+      return;
+    }
+    endDrag();
+  });
+  bd.addEventListener('pointercancel', function(){ drag = null; link = null; render(); });
+  bd.addEventListener('keydown', function(e){
+    var b = e.target.closest && e.target.closest('[data-node]'); if(!b) return;
+    var nid = b.dataset.node;
+    if(e.key==='Enter' || e.key==='F2'){ e.preventDefault(); sel = nid; selEdge = null; connectFrom = null; editing = true; pendingFocus = 'NAME'; render(); return; }
+    if(e.key==='Delete' || e.key==='Backspace'){ e.preventDefault(); removeNode(nid); return; }
+    if(e.key==='c' || e.key==='C'){ e.preventDefault(); sel = nid; selEdge = null; editing = false; connectFrom = nid; pendingFocus = nid; render(); say('Choose the box that '+nm(state(),nid)+' sends data to.'); return; }
+    var d = {ArrowLeft:[-1,0], ArrowRight:[1,0], ArrowUp:[0,-1], ArrowDown:[0,1]}[e.key]; if(!d) return;
+    e.preventDefault();
+    var p = curPos[b.dataset.node], st = e.shiftKey ? 48 : 16;
+    moveNode(b.dataset.node, Math.max(0, Math.min(curW-curNw, p.x+d[0]*st)), Math.max(0, p.y+d[1]*st));
+  });
+
+  var lastTap = {id:null, t:0};
+  bd.addEventListener('click', function(e){
+    if(justDragged) return;
+    var h = e.target.closest('[data-act=connect]');
+    if(h){
+      var hid = h.dataset['for'];
+      if(connectFrom){ pendingFocus = connectFrom; connectFrom = null; render(); say('Connection cancelled.'); }
+      else { sel = hid; selEdge = null; editing = false; connectFrom = hid; connectPort = h.dataset.port; pendingFocus = hid; render(); say('Choose the box that '+nm(state(),hid)+' sends data to.'); }
+      return;
+    }
+    var ed = e.target.closest('[data-edge]');
+    if(ed){ selEdge = ed.dataset.edge; sel = null; editing = false; connectFrom = null; render(); return; }
+    var b = e.target.closest('[data-node]');
+    if(!b){ if(e.target.closest('#board') && (sel || selEdge)){ sel = null; selEdge = null; editing = false; connectFrom = null; render(); } return; }
+    var id = b.dataset.node;
+    if(connectFrom){
+      if(connectFrom===id){ connectFrom = null; pendingFocus = id; render(); say('Connection cancelled.'); }
+      else { var a = connectFrom, ap = connectPort; connectFrom = null; connectPort = null; connect(a, id, ap, null); }
+    } else {
+      var now = Date.now();
+      if(lastTap.id===id && now-lastTap.t < 450){ lastTap = {id:null, t:0}; sel = id; selEdge = null; editing = true; pendingFocus = 'NAME'; render(); return; }
+      lastTap = {id:id, t:now};
+      selEdge = null; editing = false; sel = (sel===id) ? null : id; pendingFocus = id; render();
+    }
+  });
+  bd.addEventListener('dblclick', function(e){
+    var b = e.target.closest('[data-node]'); if(!b || connectFrom) return;
+    sel = b.dataset.node; selEdge = null; editing = true; pendingFocus = 'NAME'; render();
+  });
+  function endEdit(inp, save){
+    if(!inp) return;
+    var id = inp.dataset['for'];
+    var n = state().nodes.filter(function(x){return x.id===id;})[0];
+    if(sel===id) editing = false;
+    var btn = n && document.querySelector('[data-node="'+id+'"]');
+    var v = inp.value.trim();
+    inp.dataset.done = '1';
+    if(n && save && v && v!==n.label){
+      append('NodeRenamed', {id:id, to:v});
+      if(btn){ var sp = btn.querySelector('span'); if(sp) sp.textContent = v; btn.setAttribute('aria-label', v + (btn.getAttribute('aria-label')||'').slice(n.label.length)); }
+      renderCoach(); renderMore(state()); say('Renamed to '+v+'.');
+    }
+    if(btn) btn.classList.remove('editing');
+    if(inp.parentNode) inp.remove();
+  }
+  bd.addEventListener('focusout', function(e){
+    if(e.target.id==='nameInp' && !e.target.dataset.done) endEdit(e.target, true);
+  });
+  bd.addEventListener('keydown', function(e){
+    if(e.target.id!=='nameInp') return;
+    if(e.key==='Enter'){ e.preventDefault(); var inp = e.target; var nid = inp.dataset['for']; endEdit(inp, true); var b = document.querySelector('[data-node="'+nid+'"]'); if(b) b.focus(); }
+    else if(e.key==='Escape'){ e.preventDefault(); e.stopPropagation(); var nid2 = e.target.dataset['for']; endEdit(e.target, false); var b2 = document.querySelector('[data-node="'+nid2+'"]'); if(b2) b2.focus(); }
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key!=='Escape') return;
+    if(!document.getElementById('picker').hidden){ closeAdd(); document.getElementById('addBtn').focus(); }
+    else if(connectFrom){ var id = connectFrom; connectFrom = null; pendingFocus = id; render(); }
+  });
+  document.addEventListener('keydown', function(e){
+    if(!(e.ctrlKey||e.metaKey) || e.altKey || reportOpen) return;
+    var k = (e.key||'').toLowerCase(), t = e.target, tg = t.tagName||'';
+    if(k!=='c' && k!=='v') return;
+    if(/INPUT|TEXTAREA|SELECT/.test(tg) || t.isContentEditable) return;
+    if(document.querySelector('dialog[open]') || !document.getElementById('picker').hidden) return;
+    if(k==='c'){ if(window.getSelection && String(window.getSelection())) return; if(copyNode()) e.preventDefault(); }
+    else if(pasteNode()) e.preventDefault();
+  });
+  document.addEventListener('keydown', function(e){
+    if((e.key==='Delete' || e.key==='Backspace') && selEdge && !/INPUT|TEXTAREA/.test((e.target.tagName||''))){ e.preventDefault(); var id = selEdge; selEdge = null; removeEdge(id); }
+  });
+  document.getElementById('coach').addEventListener('click', function(e){ var b = e.target.closest('[data-undo]'); if(b) undoBatch(b.dataset.undo); });
+  document.getElementById('chatForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var inp = document.getElementById('chatInp');
+    if(doChat(inp.value)) inp.value = '';
+    inp.focus();
+  });
+  document.getElementById('finishBtn').onclick = doFinish;
+  document.getElementById('backBtn').onclick = function(){ reportOpen = false; pendingFocus = 'ADD'; render(); };
+  document.getElementById('restart').onclick = function(){ loadProblem(current, true); };
+
+  function copy(text, btn, fallbackEl){
+    var old = btn.textContent;
+    (navigator.clipboard && navigator.clipboard.writeText ? navigator.clipboard.writeText(text) : Promise.reject()).then(function(){
+      btn.textContent = 'Copied'; say('Copied.'); setTimeout(function(){ btn.textContent = old; }, 1500);
+    }).catch(function(){
+      if(fallbackEl){ var d = document.getElementById('texDetails'); d.open = true; fallbackEl.focus(); fallbackEl.select(); }
+      btn.textContent = 'Select and copy'; setTimeout(function(){ btn.textContent = old; }, 2000);
+    });
+  }
+  document.getElementById('copyTex').onclick = function(){ var t = document.getElementById('texSrc'); copy(t.value, this, t); };
+  document.getElementById('copyEv').onclick = function(){ copy(JSON.stringify(events.map(function(e){return {seq:e.seq,ts:e.ts,actor:e.actor||'user',type:e.type,payload:e.payload};}), null, 1), this, null); };
+  var dlg = document.getElementById('detailsDlg');
+  document.getElementById('detailsBtn').onclick = function(){ if(dlg.showModal) dlg.showModal(); else dlg.setAttribute('open',''); };
+  document.getElementById('detClose').onclick = function(){ if(dlg.close) dlg.close(); else dlg.removeAttribute('open'); };
+  document.getElementById('restart').onclick = function(){ if(dlg.close) dlg.close(); else dlg.removeAttribute('open'); loadProblem(current, true); };
+
+  /* resizable coach panel: drag the handle, or focus it and use the arrow keys */
+  var split = document.getElementById('designView'), sp = document.getElementById('splitter'), cw = 360, spd = null;
+  function setW(w){
+    cw = Math.max(300, Math.min(640, w)); split.style.setProperty('--chat-w', cw+'px');
+    sp.setAttribute('aria-valuemin','300'); sp.setAttribute('aria-valuemax','640'); sp.setAttribute('aria-valuenow', String(cw));
+    if(!reportOpen) renderBoard(state());
+  }
+  sp.addEventListener('pointerdown', function(e){ spd = {x:e.clientX, w:cw}; try{ sp.setPointerCapture(e.pointerId); }catch(_){} });
+  sp.addEventListener('pointermove', function(e){ if(spd) setW(spd.w + (spd.x - e.clientX)); });
+  sp.addEventListener('pointerup', function(){ spd = null; });
+  sp.addEventListener('keydown', function(e){
+    if(e.key==='ArrowLeft'){ e.preventDefault(); setW(cw+24); } else if(e.key==='ArrowRight'){ e.preventDefault(); setW(cw-24); }
+  });
+  setW(360);
+  var rt; window.addEventListener('resize', function(){ clearTimeout(rt); rt = setTimeout(function(){ if(!reportOpen) renderBoard(state()); }, 120); });
+
+  loadProblem(PROBLEMS[0].id);
+})();
+</script>
+</body>
+</html>
