@@ -23,7 +23,7 @@ A coaching app for system design interviews. The learner builds an architecture 
 - `npm run build`: static build into `dist/`
 - `npm test`: Vitest (engine, reducer, fixtures)
 - `npm run evals`: headless fixture runner, prints a pass/fail table and spoiler/ghost-component rates
-- `npm run e2e`: Playwright against real Chrome (`/usr/bin/google-chrome`); includes the regression "connecting must not move boxes; arrows must stay inside the canvas"
+- `npm run e2e`: Playwright against real Google Chrome (`channel: 'chrome'`, so it works on macOS and Linux); includes the regression "connecting must not move boxes; arrows must stay inside the canvas"
 
 ## Definition of done for any step
 - `npm test`, `npm run evals`, `npm run build` pass.
