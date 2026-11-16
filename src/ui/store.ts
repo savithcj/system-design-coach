@@ -8,6 +8,9 @@ export const ui = {
   sel: null as string | null,
   selEdge: null as string | null,
   editing: false,
+  /** Edge whose label field is open, or box whose note field is open. */
+  editingEdge: null as string | null,
+  editingNote: null as string | null,
   connectFrom: null as string | null,
   connectPort: null as string | null,
   reportOpen: false,
@@ -48,7 +51,7 @@ export function dispatch<K extends KnownType>(type: K, payload: PayloadMap[K], a
 }
 
 export function resetSelection(): void {
-  ui.sel = null; ui.selEdge = null; ui.editing = false; ui.connectFrom = null; ui.connectPort = null
+  ui.sel = null; ui.selEdge = null; ui.editing = false; ui.editingEdge = null; ui.editingNote = null; ui.connectFrom = null; ui.connectPort = null
 }
 
 export function loadProblem(id: string, fresh = false): void {

@@ -142,3 +142,20 @@ dialog h3{font-size:13px;margin:14px 0 6px;color:var(--muted);font-weight:500;te
   .dock{margin-bottom:16px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* arrow labels, node notes (Milestone 1). Same quiet language as the rest: hairlines, soft fills, monospace for notes. */
+.elabel{font:11.5px ui-monospace,Menlo,Consolas,monospace;fill:var(--ink);stroke:var(--surface);stroke-width:5px;paint-order:stroke;stroke-linejoin:round;pointer-events:all;cursor:pointer;user-select:none}
+path[data-edge]:focus{outline:none}
+path[data-edge]:focus-visible{stroke:var(--accent);stroke-opacity:.22}
+.edgeName{position:absolute;z-index:2;width:150px;height:22px;transform:translate(-50%,-50%);font:11.5px ui-monospace,Menlo,Consolas,monospace;text-align:center;color:var(--ink);background:var(--surface);border:0;border-bottom:1px solid var(--accent);padding:0;margin:0;border-radius:0}
+.edgeName:focus-visible{outline:none;border-bottom-width:2px}
+.note,.noteEdit{position:absolute;z-index:1;font:11.5px/1.45 ui-monospace,Menlo,Consolas,monospace;color:var(--ink);border-radius:6px;padding:5px 8px;text-align:left;margin:0}
+.note{white-space:pre-wrap;overflow-wrap:anywhere;background:var(--soft);border:1px solid var(--line2);cursor:text}
+.note:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.noteEdit{z-index:2;min-height:56px;resize:none;background:var(--surface);border:1px solid var(--accent)}
+.noteEdit:focus-visible{outline:none;box-shadow:0 0 0 1px var(--accent)}
+.noteBtn{position:absolute;z-index:3;width:18px;height:18px;padding:0;border-radius:50%;border:1px solid var(--line2);background:var(--surface);color:var(--muted);display:grid;place-items:center;cursor:pointer;opacity:0;transition:opacity .12s}
+.noteBtn::after{content:"";position:absolute;inset:-6px;border-radius:50%}
+.node:hover+.hs .noteBtn,.node:focus-visible+.hs .noteBtn,.hs:hover .noteBtn,.noteBtn:focus-visible{opacity:1}
+.noteBtn:hover{color:var(--accent);border-color:var(--accent)}
+@media (hover:none){.hs.sel .noteBtn{opacity:1}}

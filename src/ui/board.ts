@@ -1,18 +1,20 @@
 import { connectIntent, copyLabel, defaultLabel } from '../core/actions'
-import { NH, NORM, curveTo, edgePath, portPt, snapPort, type Pt, type Snap } from '../core/geometry'
+import { NH, NORM, curveTo, edgeLabelPoint, edgePath, noteSide, portPt, snapPort, usedPorts, type Pt, type Snap } from '../core/geometry'
 import type { Port } from '../core/events'
 import { canvasHeight, freeSlot, resolvePositions, tidyPositions } from '../core/layout'
 import { ROLES, roleLabel, type Role } from '../core/roles'
-import { emptyState, nodeName, type State } from '../core/state'
+import { emptyState, nodeName, type EdgeState, type NodeState, type State } from '../core/state'
+import { narrate } from '../core/report'
+import { undoView } from '../core/undo'
 import { escapeHtml as esc } from '../core/text'
 import { $, say } from './dom'
-import { dispatch, getState, record, render, resetSelection, seqNext, ui } from './store'
+import { dispatch, getLog, getState, record, render, resetSelection, seqNext, ui } from './store'
 import { shapeSvg } from './shapes'
 import { renderChat } from './chat'
 import { renderDetails } from './details'
 
-interface Cur { s: State; pos: Record<string, Pt>; nw: number; W: number }
-let cur: Cur = { s: emptyState(), pos: {}, nw: 0, W: 0 }
+interface Cur { s: State; pos: Record<string, Pt>; nw: number; W: number; H: number }
+let cur: Cur = { s: emptyState(), pos: {}, nw: 0, W: 0, H: 0 }
 
 export function boardWidth(): number {
   return Math.max(260, $('boardWrap').clientWidth - 34)
@@ -91,28 +93,116 @@ export function tidy(): void {
   say('Layout tidied.')
 }
 
+function beginEdgeLabel(id: string): void {
+  ui.selEdge = id; ui.sel = null; ui.editing = false; ui.editingNote = null; ui.connectFrom = null; ui.editingEdge = id
+  ui.pendingFocus = 'EDGENAME'
+  render()
+}
+
+function beginNote(id: string): void {
+  ui.sel = id; ui.selEdge = null; ui.editing = false; ui.editingEdge = null; ui.connectFrom = null; ui.editingNote = id
+  ui.pendingFocus = 'NOTE'
+  render()
+}
+
+/** Ctrl/Cmd+Z and Ctrl/Cmd+Shift+Z. Undo is an event; the log only grows. */
+function undoRedo(kind: 'undo' | 'redo'): void {
+  const v = undoView(getLog())
+  const target = kind === 'undo' ? v.undoTarget : v.redoTarget
+  if (target === null) { say(kind === 'undo' ? 'Nothing to undo.' : 'Nothing to redo.'); return }
+  record(kind === 'undo' ? 'UserActionUndone' : 'UserActionRedone', { targetSeq: target })
+  const s = getState()
+  // Undo can remove the selected box or arrow; never leave the UI pointing at something that is gone.
+  if ((ui.sel && !s.nodes.some((n) => n.id === ui.sel)) || (ui.selEdge && !s.edges.some((e) => e.id === ui.selEdge))) resetSelection()
+  ui.editing = false; ui.editingEdge = null; ui.editingNote = null; ui.connectFrom = null
+  ui.pendingFocus = ui.sel ?? 'ADD'
+  render()
+  const last = narrate(getLog()).at(-1)
+  say(last?.text ?? (kind === 'undo' ? 'Undid a change.' : 'Redid a change.'))
+}
+
 /* ---------- rendering ---------- */
+
+function edgeGeom(e: EdgeState): { d: string; mid: Pt } | null {
+  const a = cur.pos[e.a], b = cur.pos[e.b]
+  if (!a || !b) return null
+  const shift = cur.s.edges.some((o) => o.a === e.b && o.b === e.a) ? 6 : 0
+  const d = edgePath(a, b, cur.nw, e.pa, e.pb, shift)
+  const mid = edgeLabelPoint(a, b, cur.nw, e.pa, e.pb, shift)
+  return d && mid ? { d, mid } : null
+}
+
+function edgeAria(s: State, e: EdgeState): string {
+  const ends = `Connection from ${nodeName(s, e.a)} to ${nodeName(s, e.b)}`
+  return e.label ? `${ends}, labelled ${e.label}. Enter edits the label, Delete removes it.` : `${ends}. Enter adds a label, Delete removes it.`
+}
 
 function edgesMarkup(): string {
   return cur.s.edges.map((e) => {
-    const a = cur.pos[e.a], b = cur.pos[e.b]
-    if (!a || !b) return ''
-    const rev = cur.s.edges.some((o) => o.a === e.b && o.b === e.a)
-    const d = edgePath(a, b, cur.nw, e.pa, e.pb, rev ? 6 : 0)
-    if (!d) return ''
+    const g = edgeGeom(e)
+    if (!g) return ''
     const on = ui.selEdge === e.id
-    return `<path d="${d}" fill="none" stroke="${on ? 'var(--accent)' : 'var(--edge)'}" stroke-width="${on ? 2 : 1.5}" marker-end="url(#${on ? 'ahSel' : 'ah'})"/>` +
-      `<path d="${d}" fill="none" stroke="transparent" stroke-width="16" data-edge="${e.id}" style="pointer-events:stroke;cursor:pointer"/>`
+    return `<path d="${g.d}" fill="none" stroke="${on ? 'var(--accent)' : 'var(--edge)'}" stroke-width="${on ? 2 : 1.5}" marker-end="url(#${on ? 'ahSel' : 'ah'})" aria-hidden="true"/>` +
+      `<path d="${g.d}" fill="none" stroke="transparent" stroke-width="16" data-edge="${e.id}" role="button" tabindex="-1" aria-label="${esc(edgeAria(cur.s, e))}" aria-keyshortcuts="Enter F2 Delete" style="pointer-events:stroke;cursor:pointer"/>`
   }).join('')
 }
 
-function handleHtml(id: string, p: Pt, nw: number): string {
+/** Labels live in their own layer above the boxes: the grid gap is narrower than a label, and a label must stay readable. */
+function labelsMarkup(): string {
+  return cur.s.edges.map((e) => {
+    const g = e.label && ui.editingEdge !== e.id ? edgeGeom(e) : null
+    return g ? `<text class="elabel" x="${g.mid.x}" y="${g.mid.y}" text-anchor="middle" dominant-baseline="central" data-edge="${e.id}" aria-hidden="true">${esc(e.label!)}</text>` : ''
+  }).join('')
+}
+
+function refreshEdges(): void {
+  const g = document.getElementById('edgeLayer'); if (g) g.innerHTML = edgesMarkup()
+  const l = document.getElementById('labelLayer'); if (l) l.innerHTML = labelsMarkup()
+}
+
+/** A note is as wide as its box and sits on a side whose dot has no arrow, so it never hides a connection. */
+function noteStyle(id: string): string {
+  const p = cur.pos[id]!
+  let side = noteSide(usedPorts(id, cur.s.edges, cur.pos, cur.nw), p.y)
+  if (side === 'r' && p.x + cur.nw * 2 + 8 > cur.W) side = 'l'
+  if (side === 'l' && p.x - cur.nw - 8 < 0) side = 'b'
+  const w = `width:${cur.nw}px`
+  return side === 'b' ? `left:${p.x}px;top:${p.y + NH + 6}px;${w}`
+    : side === 't' ? `left:${p.x}px;bottom:${cur.H - p.y + 6}px;${w}`
+    : side === 'r' ? `left:${p.x + cur.nw + 8}px;top:${p.y}px;${w}`
+    : `right:${cur.W - p.x + 8}px;top:${p.y}px;${w}`
+}
+
+function notesMarkup(): string {
+  return cur.s.nodes.map((n) => {
+    const p = cur.pos[n.id]
+    if (!p) return ''
+    if (ui.editingNote === n.id) {
+      return `<textarea id="noteInp" class="noteEdit" data-for="${n.id}" aria-label="Note for ${esc(n.label)}" rows="3" style="${noteStyle(n.id)}">${esc(n.note ?? '')}</textarea>`
+    }
+    return n.note ? `<button class="note" data-note="${n.id}" aria-label="${esc(`Note on ${n.label}: ${n.note}. Press to edit.`)}" style="${noteStyle(n.id)}">${esc(n.note)}</button>` : ''
+  }).join('')
+}
+
+function nodeDesc(s: State, n: NodeState): string {
+  const outs = s.edges.filter((e) => e.a === n.id).map((e) => nodeName(s, e.b))
+  const ins = s.edges.filter((e) => e.b === n.id).map((e) => nodeName(s, e.a))
+  let desc = `${n.label}, ${roleLabel(n.role)}. ${outs.length ? `Sends to ${outs.join(', ')}. ` : ''}${ins.length ? `Receives from ${ins.join(', ')}. ` : ''}${!outs.length && !ins.length ? 'Not connected. ' : ''}${n.note ? 'Has a note. ' : ''}`
+  if (ui.connectFrom && ui.connectFrom !== n.id) desc += `Press to draw an arrow from ${nodeName(s, ui.connectFrom)} to this.`
+  else if (ui.connectFrom === n.id) desc += 'Connecting from here. Press to cancel.'
+  return desc
+}
+
+function handleHtml(n: NodeState, p: Pt, nw: number): string {
+  const id = n.id
   const on = ui.connectFrom === id
   const dots = (['t', 'r', 'b', 'l'] as const).map((k) => {
     const q = portPt(p, nw, k)
     return `<span class="handle" data-act="connect" data-for="${id}" data-port="${k}" style="left:${q.x - 6}px;top:${q.y - 6}px"></span>`
   }).join('')
-  return `<span class="hs${on ? ' on' : ''}${ui.sel === id ? ' sel' : ''}" data-hs="${id}" aria-hidden="true">${dots}</span>`
+  // Decorative duplicate of the N key for pointer users, so it stays out of the tab order and the accessibility tree.
+  const noteBtn = `<button type="button" class="noteBtn" data-act="note" data-for="${id}" tabindex="-1" aria-label="Note for ${esc(n.label)}" style="left:${p.x + nw - 9}px;top:${p.y - 9}px"${n.note ? ' hidden' : ''}><svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" aria-hidden="true"><path d="M1.5 3h7M1.5 5h7M1.5 7h4"/></svg></button>`
+  return `<span class="hs${on ? ' on' : ''}${ui.sel === id ? ' sel' : ''}" data-hs="${id}" aria-hidden="true">${dots}${noteBtn}</span>`
 }
 
 function placeHandles(id: string, p: Pt): void {
@@ -120,36 +210,40 @@ function placeHandles(id: string, p: Pt): void {
     const q = portPt(p, cur.nw, h.dataset['port'] as Port)
     h.style.left = `${q.x - 6}px`; h.style.top = `${q.y - 6}px`
   })
+  const nb = document.querySelector<HTMLElement>(`.noteBtn[data-for="${id}"]`)
+  if (nb) { nb.style.left = `${p.x + cur.nw - 9}px`; nb.style.top = `${p.y - 9}px` }
 }
 
 export function renderBoard(s: State): void {
   const el = $('board')
   const W = boardWidth()
-  cur = { s, pos: {}, nw: 0, W: 0 }
+  cur = { s, pos: {}, nw: 0, W: 0, H: 0 }
   if (!s.nodes.length) { el.style.width = 'auto'; el.style.height = 'auto'; el.innerHTML = ''; return }
   const L = resolvePositions(s.nodes, W)
-  cur = { s, pos: L.pos, nw: L.nw, W: L.W }
   const H = canvasHeight(L.pos)
+  cur = { s, pos: L.pos, nw: L.nw, W: L.W, H }
   const marker = (id: string, fill: string) => `<marker id="${id}" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.5,1 L10,5 L0.5,9 z" fill="${fill}"/></marker>`
-  const svg = `<svg id="edgeSvg" width="${L.W}" height="${H}" style="position:absolute;left:0;top:0;pointer-events:none" aria-hidden="true" focusable="false"><defs>${marker('ah', 'var(--edge)')}${marker('ahSel', 'var(--accent)')}</defs><g id="edgeLayer">${edgesMarkup()}</g></svg>`
+  const svg = `<svg id="edgeSvg" width="${L.W}" height="${H}" style="position:absolute;left:0;top:0;pointer-events:none" role="group" aria-label="Connections" focusable="false"><defs>${marker('ah', 'var(--edge)')}${marker('ahSel', 'var(--accent)')}</defs><g id="edgeLayer">${edgesMarkup()}</g></svg>`
   let btns = ''
   for (const n of s.nodes) {
     const p = L.pos[n.id]!
-    const outs = s.edges.filter((e) => e.a === n.id).map((e) => nodeName(s, e.b))
-    const ins = s.edges.filter((e) => e.b === n.id).map((e) => nodeName(s, e.a))
-    let desc = `${n.label}, ${roleLabel(n.role)}. ${outs.length ? `Sends to ${outs.join(', ')}. ` : ''}${ins.length ? `Receives from ${ins.join(', ')}. ` : ''}${!outs.length && !ins.length ? 'Not connected. ' : ''}`
-    if (ui.connectFrom && ui.connectFrom !== n.id) desc += `Press to draw an arrow from ${nodeName(s, ui.connectFrom)} to this.`
-    else if (ui.connectFrom === n.id) desc += 'Connecting from here. Press to cancel.'
     const cls = `node${ui.connectFrom && ui.connectFrom !== n.id ? ' target' : ''}${ui.editing && ui.sel === n.id ? ' editing' : ''}`
-    let ov = handleHtml(n.id, p, L.nw)
+    let ov = handleHtml(n, p, L.nw)
     if (ui.sel === n.id && ui.editing) {
       const ny = p.y + (n.role === 'db' ? 29 : 25)
       ov += `<input id="nameInp" class="nodeName" type="text" aria-label="Name" data-for="${n.id}" value="${esc(n.label)}" style="left:${p.x + 20}px;top:${ny}px;width:${Math.max(40, L.nw - 40)}px">`
     }
-    btns += `<button class="${cls}" data-node="${n.id}" aria-pressed="${ui.sel === n.id}" aria-describedby="moveHelp" aria-keyshortcuts="Enter F2 Delete C Control+C Control+V" aria-label="${esc(desc)}" data-role="${n.role}" style="left:${p.x}px;top:${p.y}px;width:${L.nw}px;height:${NH}px">${shapeSvg(n.role, L.nw, NH)}<small>${esc(roleLabel(n.role))}</small><span>${esc(n.label)}</span></button>${ov}`
+    btns += `<button class="${cls}" data-node="${n.id}" aria-pressed="${ui.sel === n.id}" aria-describedby="moveHelp" aria-keyshortcuts="Enter F2 Delete C N E Control+C Control+V Control+Z" aria-label="${esc(nodeDesc(s, n))}" data-role="${n.role}" style="left:${p.x}px;top:${p.y}px;width:${L.nw}px;height:${NH}px">${shapeSvg(n.role, L.nw, NH)}<small>${esc(roleLabel(n.role))}</small><span>${esc(n.label)}</span></button>${ov}`
+  }
+  let edgeInput = ''
+  const editedEdge = ui.editingEdge ? s.edges.find((x) => x.id === ui.editingEdge) : undefined
+  const eg = editedEdge && edgeGeom(editedEdge)
+  if (editedEdge && eg) {
+    edgeInput = `<input id="edgeInp" class="edgeName" type="text" aria-label="Label for the connection from ${esc(nodeName(s, editedEdge.a))} to ${esc(nodeName(s, editedEdge.b))}" data-for="${editedEdge.id}" value="${esc(editedEdge.label ?? '')}" style="left:${eg.mid.x}px;top:${eg.mid.y}px">`
   }
   el.style.width = `${L.W}px`; el.style.height = `${H}px`
-  el.innerHTML = svg + btns
+  const labelSvg = `<svg id="labelSvg" width="${L.W}" height="${H}" style="position:absolute;left:0;top:0;pointer-events:none" aria-hidden="true" focusable="false"><g id="labelLayer">${labelsMarkup()}</g></svg>`
+  el.innerHTML = svg + btns + labelSvg + `<div id="notes">${notesMarkup()}</div>` + edgeInput
 }
 
 /* ---------- component picker: type to filter, arrows to move, Enter to choose, Escape to close ---------- */
@@ -273,9 +367,12 @@ export function initBoard(): void {
     drag.el.style.left = `${drag.x}px`; drag.el.style.top = `${drag.y}px`
     placeHandles(drag.id, { x: drag.x, y: drag.y })
     cur.pos[drag.id] = { x: drag.x, y: drag.y }
-    const g = document.getElementById('edgeLayer'); if (g) g.innerHTML = edgesMarkup()
-    const H = canvasHeight(cur.pos); bd.style.height = `${H}px`
+    const noteEl = document.querySelector<HTMLElement>(`[data-note="${drag.id}"]`)
+    if (noteEl) noteEl.style.cssText = noteStyle(drag.id)
+    refreshEdges()
+    const H = canvasHeight(cur.pos); cur.H = H; bd.style.height = `${H}px`
     document.getElementById('edgeSvg')?.setAttribute('height', String(H))
+    document.getElementById('labelSvg')?.setAttribute('height', String(H))
   })
 
   bd.addEventListener('pointerup', () => {
@@ -296,12 +393,41 @@ export function initBoard(): void {
   })
   bd.addEventListener('pointercancel', () => { drag = null; link = null; render() })
 
+  /* keyboard on a focused arrow: Enter/F2 labels it, arrows cycle through arrows, Escape returns to the box */
+  let edgeOrigin: string | null = null
+  function edgeKey(e: KeyboardEvent, id: string): void {
+    const edges = getState().edges
+    const i = edges.findIndex((x) => x.id === id)
+    if (i < 0) return
+    if (e.key === 'Enter' || e.key === 'F2') { e.preventDefault(); beginEdgeLabel(id); return }
+    const step = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0
+    if (step) {
+      e.preventDefault()
+      const nx = edges[(i + step + edges.length) % edges.length]!
+      ui.selEdge = nx.id; ui.pendingFocus = `edge:${nx.id}`; render()
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      const back = edgeOrigin && getState().nodes.some((n) => n.id === edgeOrigin) ? edgeOrigin : edges[i]!.a
+      ui.selEdge = null; ui.sel = back; ui.pendingFocus = back; render()
+    }
+  }
+
   /* keyboard on a focused box */
   bd.addEventListener('keydown', (e) => {
     const t = e.target as Element
+    const eh = t.closest<SVGElement>('path[data-edge]')
+    if (eh) { edgeKey(e, eh.dataset['edge']!); return }
     const b = t.closest<HTMLElement>('[data-node]')
     if (!b || t.id === 'nameInp') return
     const nid = b.dataset['node']!
+    if ((e.key === 'n' || e.key === 'N') && !(e.ctrlKey || e.metaKey || e.altKey)) { e.preventDefault(); beginNote(nid); return }
+    if ((e.key === 'e' || e.key === 'E') && !(e.ctrlKey || e.metaKey || e.altKey)) {
+      e.preventDefault()
+      const s0 = getState()
+      const first = s0.edges.find((x) => x.a === nid) ?? s0.edges.find((x) => x.b === nid)
+      if (!first) { say(`${nodeName(s0, nid)} has no arrows.`); return }
+      edgeOrigin = nid; ui.sel = null; ui.selEdge = first.id; ui.pendingFocus = `edge:${first.id}`; render(); return
+    }
     if (e.key === 'Enter' || e.key === 'F2') { e.preventDefault(); ui.sel = nid; ui.selEdge = null; ui.connectFrom = null; ui.editing = true; ui.pendingFocus = 'NAME'; render(); return }
     if (e.key === 'Delete' || e.key === 'Backspace') { e.preventDefault(); removeNode(nid); return }
     if (e.key === 'c' || e.key === 'C') {
@@ -328,8 +454,21 @@ export function initBoard(): void {
       else { ui.sel = hid; ui.selEdge = null; ui.editing = false; ui.connectFrom = hid; ui.connectPort = h.dataset['port'] ?? null; ui.pendingFocus = hid; render(); say(`Choose the box that ${nodeName(getState(), hid)} sends data to.`) }
       return
     }
-    const ed = t.closest<HTMLElement>('[data-edge]')
-    if (ed) { ui.selEdge = ed.dataset['edge']!; ui.sel = null; ui.editing = false; ui.connectFrom = null; render(); return }
+    const nbtn = t.closest<HTMLElement>('[data-act=note]')
+    if (nbtn) { beginNote(nbtn.dataset['for']!); return }
+    const noteEl = t.closest<HTMLElement>('[data-note]')
+    if (noteEl) { beginNote(noteEl.dataset['note']!); return }
+    const ed = t.closest<Element>('[data-edge]')
+    if (ed) {
+      const eid = (ed as HTMLElement | SVGElement).dataset['edge']!
+      const now = Date.now()
+      // Same tap-timing rule as boxes: the first click re-renders, so native dblclick is unreliable.
+      if (lastTap.id === `edge:${eid}` && ui.selEdge === eid && now - lastTap.t < 450) { lastTap = { id: null, t: 0 }; beginEdgeLabel(eid); return }
+      lastTap = { id: `edge:${eid}`, t: now }
+      ui.selEdge = eid; ui.sel = null; ui.editing = false; ui.connectFrom = null
+      // Focus the arrow so Enter/F2 (label) and Delete work right after a click, like on a selected box.
+      ui.pendingFocus = `edge:${eid}`; render(); return
+    }
     const b = t.closest<HTMLElement>('[data-node]')
     if (!b) {
       if (t.closest('#board') && (ui.sel || ui.selEdge)) { resetSelection(); render() }
@@ -347,6 +486,8 @@ export function initBoard(): void {
     ui.selEdge = null; ui.editing = false; ui.sel = ui.sel === id ? null : id; ui.pendingFocus = id; render()
   })
   bd.addEventListener('dblclick', (e) => {
+    const eid = (e.target as Element).closest<Element>('[data-edge]')
+    if (eid) { beginEdgeLabel((eid as HTMLElement | SVGElement).dataset['edge']!); return }
     const b = (e.target as Element).closest<HTMLElement>('[data-node]')
     if (!b || ui.connectFrom) return
     ui.sel = b.dataset['node']!; ui.selEdge = null; ui.editing = true; ui.pendingFocus = 'NAME'; render()
@@ -369,12 +510,70 @@ export function initBoard(): void {
     btn?.classList.remove('editing')
     inp.remove()
   }
+  /* arrow label: Enter or blur saves, Escape reverts. Patches only the arrow layer so a click elsewhere is not lost. */
+  function endEdgeEdit(inp: HTMLInputElement, save: boolean): void {
+    const id = inp.dataset['for']!
+    const edge = getState().edges.find((x) => x.id === id)
+    inp.dataset['done'] = '1'
+    ui.editingEdge = null
+    const v = inp.value.trim()
+    if (edge && save && v !== (edge.label ?? '')) {
+      record('EdgeLabeled', { id, label: v })
+      renderDetails(getState())
+      say(v ? `Labelled ${nodeName(getState(), edge.a)} to ${nodeName(getState(), edge.b)} ${v}.` : 'Label removed.')
+    }
+    inp.remove()
+    cur = { ...cur, s: getState() }
+    refreshEdges()
+  }
+
+  /* node note: Enter or blur saves, Shift+Enter adds a line, Escape reverts. */
+  function endNoteEdit(ta: HTMLTextAreaElement, save: boolean): void {
+    const id = ta.dataset['for']!
+    const n = getState().nodes.find((x) => x.id === id)
+    ta.dataset['done'] = '1'
+    ui.editingNote = null
+    const text = ta.value.replace(/\s+$/, '')
+    const was = n?.note ?? ''
+    if (n && save && (text.trim() ? text : '') !== was) {
+      record('NodeNoteUpdated', { id, text })
+      renderDetails(getState())
+      say(text.trim() ? `Note saved on ${n.label}.` : `Note removed from ${n.label}.`)
+    }
+    ta.remove()
+    cur = { ...cur, s: getState() }
+    const layer = document.getElementById('notes'); if (layer) layer.innerHTML = notesMarkup()
+    const now = getState().nodes.find((x) => x.id === id)
+    const btn = document.querySelector<HTMLElement>(`[data-node="${id}"]`)
+    if (now && btn) btn.setAttribute('aria-label', nodeDesc(getState(), now))
+    const nb = document.querySelector<HTMLElement>(`.noteBtn[data-for="${id}"]`)
+    if (nb) nb.hidden = !!now?.note
+  }
+
   bd.addEventListener('focusout', (e) => {
     const t = e.target as HTMLInputElement
-    if (t.id === 'nameInp' && !t.dataset['done']) endEdit(t, true)
+    if (t.dataset['done']) return
+    if (t.id === 'nameInp') endEdit(t, true)
+    else if (t.id === 'edgeInp') endEdgeEdit(t, true)
+    else if (t.id === 'noteInp') endNoteEdit(t as unknown as HTMLTextAreaElement, true)
   })
   bd.addEventListener('keydown', (e) => {
     const t = e.target as HTMLInputElement
+    if (t.id === 'edgeInp') {
+      const eid = t.dataset['for']!
+      const back = () => document.querySelector<SVGElement>(`path[data-edge="${eid}"]`)?.focus()
+      if (e.key === 'Enter') { e.preventDefault(); endEdgeEdit(t, true); back() }
+      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); endEdgeEdit(t, false); back() }
+      return
+    }
+    if (t.id === 'noteInp') {
+      const nid = t.dataset['for']!
+      const back = () => document.querySelector<HTMLElement>(`[data-node="${nid}"]`)?.focus()
+      const ta = t as unknown as HTMLTextAreaElement
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); endNoteEdit(ta, true); back() }
+      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); endNoteEdit(ta, false); back() }
+      return
+    }
     if (t.id !== 'nameInp') return
     const nid = t.dataset['for']!
     const back = () => document.querySelector<HTMLElement>(`[data-node="${nid}"]`)?.focus()
@@ -396,6 +595,15 @@ export function initBoard(): void {
     if (document.querySelector('dialog[open]') || !$('picker').hidden) return
     if (k === 'c') { if (window.getSelection && String(window.getSelection())) return; if (copyNode()) e.preventDefault() }
     else if (pasteNode()) e.preventDefault()
+  })
+  document.addEventListener('keydown', (e) => {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey || ui.reportOpen || (e.key || '').toLowerCase() !== 'z') return
+    const t = e.target as HTMLElement
+    // Inside a text field the browser's own undo of typing wins.
+    if (/INPUT|TEXTAREA|SELECT/.test(t.tagName || '') || t.isContentEditable) return
+    if (document.querySelector('dialog[open]') || !$('picker').hidden) return
+    e.preventDefault()
+    undoRedo(e.shiftKey ? 'redo' : 'undo')
   })
   document.addEventListener('keydown', (e) => {
     const t = e.target as HTMLElement

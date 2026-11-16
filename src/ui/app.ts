@@ -20,8 +20,19 @@ function render(): void {
   if (ui.reportOpen) { renderReport(); return }
   renderBoard(s); renderChat(); renderDetails(s)
   if (ui.pendingFocus) {
-    const f = ui.pendingFocus === 'ADD' ? $('addBtn') : ui.pendingFocus === 'NAME' ? document.getElementById('nameInp') : document.querySelector<HTMLElement>(`[data-node="${ui.pendingFocus}"]`)
-    if (f) { f.focus(); if (ui.pendingFocus === 'NAME') (f as HTMLInputElement).select() }
+    const pf = ui.pendingFocus
+    const f: HTMLElement | SVGElement | null =
+      pf === 'ADD' ? $('addBtn')
+      : pf === 'NAME' ? document.getElementById('nameInp')
+      : pf === 'EDGENAME' ? document.getElementById('edgeInp')
+      : pf === 'NOTE' ? document.getElementById('noteInp')
+      : pf.startsWith('edge:') ? document.querySelector<SVGElement>(`path[data-edge="${pf.slice(5)}"]`)
+      : document.querySelector<HTMLElement>(`[data-node="${pf}"]`)
+    if (f) {
+      f.focus()
+      if (pf === 'NAME' || pf === 'EDGENAME') (f as HTMLInputElement).select()
+      else if (pf === 'NOTE') { const ta = f as HTMLTextAreaElement; ta.setSelectionRange(ta.value.length, ta.value.length) }
+    }
     ui.pendingFocus = null
   }
 }

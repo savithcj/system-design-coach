@@ -112,3 +112,35 @@ export function snapPort(pos: Readonly<Record<string, Pt>>, nw: number, px: numb
   }
   return { id: best, port }
 }
+
+export type NoteSide = 'b' | 't' | 'r' | 'l'
+
+/** Which of a box's four dots have an arrow attached (explicit port, or the one chosen automatically). */
+export function usedPorts(
+  id: string,
+  edges: readonly { a: string; b: string; pa?: Port; pb?: Port }[],
+  pos: Readonly<Record<string, Pt>>,
+  nw: number,
+): Set<Port> {
+  const used = new Set<Port>()
+  for (const e of edges) {
+    if (e.a !== id && e.b !== id) continue
+    const pa = pos[e.a], pb = pos[e.b]
+    if (!pa || !pb) continue
+    const auto = autoPorts(pa, pb, nw)
+    used.add(e.a === id ? (e.pa ?? auto[0]) : (e.pb ?? auto[1]))
+  }
+  return used
+}
+
+/**
+ * Where a box's note goes so it does not sit on an arrow: below if that dot is free, else above (unless the box is
+ * too close to the top of the canvas), else right, else left.
+ */
+export function noteSide(used: ReadonlySet<Port>, y: number): NoteSide {
+  if (!used.has('b')) return 'b'
+  if (!used.has('t') && y >= 56) return 't'
+  if (!used.has('r')) return 'r'
+  if (!used.has('l')) return 'l'
+  return 'b'
+}
