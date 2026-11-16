@@ -6,7 +6,66 @@
 <title>System Design Coach</title>
 </head>
 <body>
-<div id="app"></div>
+<a class="skip" href="#main">Skip to content</a>
+<div class="app">
+  <header class="top">
+    <h1>Design Coach</h1>
+    <div id="seg" class="seg" role="radiogroup" aria-label="Problem"></div>
+    <span class="grow"></span>
+    <button id="detailsBtn" class="btn ghost">Details</button>
+    <button id="finishBtn" class="btn solid">Finish</button>
+  </header>
+
+  <main id="main">
+    <div id="designView" class="split">
+      <section class="boardpane" aria-label="Design board">
+        <p id="prompt" class="prompt"></p>
+        <div class="toolbar" role="toolbar" aria-label="Board tools" id="toolbar">
+          <div class="pickwrap">
+            <button id="addBtn" class="btn" aria-haspopup="listbox" aria-expanded="false" aria-controls="picker">+ Add component</button>
+            <div id="picker" class="popup" hidden>
+              <div id="pickStage1">
+                <input id="pickInp" type="text" role="combobox" aria-expanded="true" aria-controls="pickList" aria-autocomplete="list" aria-label="Choose a component type" placeholder="Search" autocomplete="off">
+                <ul id="pickList" role="listbox" aria-label="Component types"></ul>
+              </div>
+            </div>
+          </div>
+          <button id="tidyBtn" class="btn ghost" hidden>Tidy up</button>
+        </div>
+        <div class="canvas" id="boardWrap"><div id="board" role="group" aria-label="Your design"></div></div>
+      </section>
+      <div id="splitter" class="splitter" role="separator" aria-orientation="vertical" aria-label="Resize coach panel" tabindex="0"></div>
+      <aside class="chat" aria-label="Coach chat">
+        <div class="chathead">Coach</div>
+        <div id="coach" role="log" aria-live="polite" aria-label="Conversation"></div>
+        <form id="chatForm" class="composer">
+          <label for="chatInp" class="sr">Message the coach</label>
+          <input id="chatInp" type="text" placeholder="Message" autocomplete="off">
+          <button type="submit" class="send" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+        </form>
+      </aside>
+    </div>
+
+    <div id="reportView" class="report" hidden>
+      <div class="rbar"><button id="backBtn" class="btn ghost">&larr; Back to design</button><span class="grow"></span><button id="copyTex" class="btn solid">Copy LaTeX</button></div>
+      <h2 id="reportH" tabindex="-1" class="sr">Your study guide</h2>
+      <div id="reportBody"></div>
+      <details id="texDetails" class="plain"><summary>LaTeX source</summary><textarea id="texSrc" class="out" readonly aria-label="LaTeX source"></textarea></details>
+    </div>
+  </main>
+</div>
+
+<dialog id="detailsDlg" aria-labelledby="detTitle">
+  <div class="dhead"><h2 id="detTitle">Details</h2><button id="detClose" class="btn ghost">Close</button></div>
+  <h3>Board as Mermaid</h3>
+  <pre id="mmSrc" tabindex="0"></pre>
+  <h3>Event log</h3>
+  <pre id="evLog" tabindex="0"></pre>
+  <div class="row"><button id="copyEv" class="btn">Copy events as JSON</button><button id="restart" class="btn danger">Start over</button></div>
+</dialog>
+
+<div id="sr" class="sr" aria-live="polite"></div>
+<div id="moveHelp" class="sr" hidden>Arrow keys move this box; hold Shift to move further. Enter or F2 renames it, C connects it to another box, Control or Command C and V copy and paste it, Delete removes it.</div>
 <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

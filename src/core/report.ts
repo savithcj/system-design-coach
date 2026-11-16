@@ -106,3 +106,14 @@ export function renderLatex(r: ReportModel): string {
   L.push(`\\paragraph{Session} ${tex(statLine(r))}`, '', '\\end{document}')
   return L.join('\n')
 }
+
+/** Chat messages only, in order. Cheaper than narrate(): the chat pane re-renders on every board change. */
+export function chatFeed(log: EventLog): { seq: number; who: 'you' | 'coach'; text: string }[] {
+  const out: { seq: number; who: 'you' | 'coach'; text: string }[] = []
+  for (const raw of log) {
+    const e = raw as KnownEvent
+    if (e.type === 'UserMessaged') out.push({ seq: e.seq, who: 'you', text: e.payload.text })
+    else if (e.type === 'CoachResponded') out.push({ seq: e.seq, who: 'coach', text: e.payload.message })
+  }
+  return out
+}
