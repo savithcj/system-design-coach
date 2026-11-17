@@ -96,13 +96,14 @@ export function planTurnFull(log: EventLog, problem: Problem, trigger: Trigger):
 
   const nudge = !rule && move.kind === 'ask_clarifying' && stage >= 4 ? nextNudge(problem, state) : null
   let message = scriptedText(move, violation, stage, nudge)
-  // In chat the hint ladder stops at level 2. Once that has been said, say how to go further instead of repeating it.
-  if (rule && trigger.kind === 'chat' && (history.spoken[move.ruleId!]?.level ?? 0) >= 2) message = STRONGER
+  let fixed = false
+  // In chat the hint ladder stops at level 2. Once that has been said, say how to go further instead of repeating it (verbatim: a model drifts here).
+  if (rule && trigger.kind === 'chat' && (history.spoken[move.ruleId!]?.level ?? 0) >= 2) { message = STRONGER; fixed = true }
   // Asking again without changing the board must not get the same line back.
   if (!rule && move.kind === 'ask_clarifying' && trigger.kind !== 'stage' && repeatsClarifying(log)) message = pointToNotes(stage)
   const gate = checkReply({ message, state, problem, stage, ruleSpoilers: rule?.spoilers, allowRuleSpoilers: move.level === 3, maxChars: MAX_CHARS_L3 })
   // Level 3 is the answer itself: shown exactly as scripted, because rewording it is where it goes vague.
-  if (gate.ok) { if (move.level !== 3) job = { index: -1, move, violation, stage, seed: message, ruleSpoilers: rule?.spoilers, allowRuleSpoilers: false } }
+  if (gate.ok) { if (move.level !== 3 && !fixed) job = { index: -1, move, violation, stage, seed: message, ruleSpoilers: rule?.spoilers, allowRuleSpoilers: false } }
   else {
     // Never show a line the gate rejects (a learner's own wording can trip it); fall back to the rule's plain question.
     out.push(planned('CoachReplyRejected', { reason: gate.reasons.join(','), move: move.kind }, 'system'))

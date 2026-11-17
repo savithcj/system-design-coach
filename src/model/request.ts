@@ -18,7 +18,7 @@ export interface RequestInput {
   violation: Violation | undefined
   seed: string
   learnerMessage?: string
-  problem: { title: string; prompt: string }
+  problem: { title: string }
 }
 
 /** Builds the trimmed, spoiler-free view a model gets. Names are the learner's own. */

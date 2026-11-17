@@ -111,3 +111,10 @@ The model is optional and off by default. The scripted coach is always what runs
 ## Bulleted notes and a coach that says where to write
 - The notes boxes are bullet lists: focusing an empty box starts a "• ", Enter adds one, Enter or Backspace on an empty bullet ends it (native undo still works). A box holding only bullets stores nothing, so an untouched box is still empty. The parser already stripped bullets; it now strips them before looking for the `---` divider. Added by the owner's request, not in docs/02.
 - Stage 1-3 coach wording names the field to write in ("Add it as a bullet under Functional requirements..."). The repeat line after a chat answer does the same. The model prompt now says to acknowledge the learner's chat message without judging it, then keep that instruction. Code still decides what is correct; chat text is still never parsed.
+
+## Coach conversation fixes (found by driving the real local model in Chrome)
+- The model request now carries the problem's title (not its full prompt: with the prompt a 3B model asked about click analytics instead of the seed) and the last four turns; the prompt tells it to answer the learner's message first, never call the system "the program", not repeat an earlier line, and ask only what the seed asks.
+- Level 3 (the actual answer) and the "press Stuck? for a stronger hint" line at the chat cap are shown exactly as scripted; the model never rewords them.
+- Chat stops at hint level 2; a further chat message on the same issue says how to go on instead of repeating level 2.
+- Real-Chrome run (Llama 3.2 3B, cached): chat replies come in about 5-10 s, stay on the open issue, name "Functional requirements", and Stuck? twice gives the concrete level-3 line.
+- Known: selecting all text in a note box and typing replaces the bullet too, so that first line has none (the parser does not need it).
