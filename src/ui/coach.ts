@@ -28,7 +28,7 @@ export async function coachTurn(trigger: Trigger, learnerMessage?: string): Prom
     busy = true
     setThinking(true)
     try {
-      const req = buildRequest({ state, log, stage: job.stage, move: job.move, violation: job.violation, seed: job.seed, learnerMessage })
+      const req = buildRequest({ state, log, stage: job.stage, move: job.move, violation: job.violation, seed: job.seed, learnerMessage, problem: { title: problem.title, prompt: problem.prompt } })
       const r = await phraseWithModel(model, req, { state, problem, stage: job.stage, ruleSpoilers: job.ruleSpoilers, allowRuleSpoilers: job.allowRuleSpoilers, timeoutMs: timeoutMs() })
       out = events.flatMap((e, i): Planned[] => {
         if (i !== job.index) return [e]

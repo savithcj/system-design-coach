@@ -26,7 +26,7 @@ function scenario() {
   const move = selectMove({ violations, history: historyOf(b.s.log), level: 'mid', stage: 1, problem: tm, asked: true, hasContent: true })
   const violation = violations.find((v) => v.ruleId === move.ruleId)
   const seed = scriptedText(move, violation, 1)
-  const req = buildRequest({ state, log: b.s.log, stage: 1, move, violation, seed })
+  const req = buildRequest({ state, log: b.s.log, stage: 1, move, violation, seed, problem: { title: tm.title, prompt: tm.prompt } })
   const ctx = { state, problem: tm, stage: 1, ruleSpoilers: undefined as string[] | undefined, allowRuleSpoilers: false }
   return { b, state, move, violation, seed, req, ctx }
 }
@@ -54,7 +54,7 @@ describe('what a model is shown', () => {
 
   it('a learner message goes in as data and is clipped', () => {
     const { b, state, move, violation, seed } = scenario()
-    const req = buildRequest({ state, log: b.s.log, stage: 1, move, violation, seed, learnerMessage: 'x'.repeat(1000) })
+    const req = buildRequest({ state, log: b.s.log, stage: 1, move, violation, seed, learnerMessage: 'x'.repeat(1000), problem: { title: tm.title, prompt: tm.prompt } })
     expect(req.learnerMessage!.length).toBeLessThan(300)
   })
 

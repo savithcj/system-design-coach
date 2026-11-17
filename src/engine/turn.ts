@@ -21,6 +21,7 @@ export type Trigger =
 export interface Planned<K extends KnownType = KnownType> { type: K; payload: PayloadMap[K]; actor: 'coach' | 'system' }
 const planned = <K extends KnownType>(type: K, payload: PayloadMap[K], actor: 'coach' | 'system'): Planned => ({ type, payload, actor } as Planned)
 
+const STRONGER = 'That is as far as I can take it in chat. Press Stuck? if you want a stronger hint on this one.'
 export const CONFIRM_TEXT = 'The next step names the approach outright. Press Stuck? again if you want it.'
 
 /** "Stuck?" twice: the second press confirms, if the confirmation question is the last thing in the log. */
@@ -95,10 +96,13 @@ export function planTurnFull(log: EventLog, problem: Problem, trigger: Trigger):
 
   const nudge = !rule && move.kind === 'ask_clarifying' && stage >= 4 ? nextNudge(problem, state) : null
   let message = scriptedText(move, violation, stage, nudge)
+  // In chat the hint ladder stops at level 2. Once that has been said, say how to go further instead of repeating it.
+  if (rule && trigger.kind === 'chat' && (history.spoken[move.ruleId!]?.level ?? 0) >= 2) message = STRONGER
   // Asking again without changing the board must not get the same line back.
   if (!rule && move.kind === 'ask_clarifying' && trigger.kind !== 'stage' && repeatsClarifying(log)) message = pointToNotes(stage)
   const gate = checkReply({ message, state, problem, stage, ruleSpoilers: rule?.spoilers, allowRuleSpoilers: move.level === 3, maxChars: MAX_CHARS_L3 })
-  if (gate.ok) job = { index: -1, move, violation, stage, seed: message, ruleSpoilers: rule?.spoilers, allowRuleSpoilers: move.level === 3 }
+  // Level 3 is the answer itself: shown exactly as scripted, because rewording it is where it goes vague.
+  if (gate.ok) { if (move.level !== 3) job = { index: -1, move, violation, stage, seed: message, ruleSpoilers: rule?.spoilers, allowRuleSpoilers: false } }
   else {
     // Never show a line the gate rejects (a learner's own wording can trip it); fall back to the rule's plain question.
     out.push(planned('CoachReplyRejected', { reason: gate.reasons.join(','), move: move.kind }, 'system'))

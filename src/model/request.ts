@@ -18,6 +18,7 @@ export interface RequestInput {
   violation: Violation | undefined
   seed: string
   learnerMessage?: string
+  problem: { title: string; prompt: string }
 }
 
 /** Builds the trimmed, spoiler-free view a model gets. Names are the learner's own. */
@@ -25,12 +26,13 @@ export function buildRequest(i: RequestInput): TurnRequest {
   const { state } = i
   const turns = i.log
     .filter((e) => e.type === 'UserMessaged' || e.type === 'CoachResponded')
-    .slice(-2)
+    .slice(-4)
     .map((e) => ({
       who: e.type === 'UserMessaged' ? ('learner' as const) : ('coach' as const),
       text: clip(String((e.payload as { text?: string; message?: string }).text ?? (e.payload as { message?: string }).message ?? '')),
     }))
   return {
+    problem: i.problem,
     stage: i.stage,
     move: i.move.kind,
     level: i.move.level,

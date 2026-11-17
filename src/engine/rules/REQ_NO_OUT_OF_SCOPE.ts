@@ -11,8 +11,8 @@ export const rule: Rule = {
   },
   hints: {
     l1: 'Is there anything an interviewer might expect that you are deliberately not building, and how would they know?',
-    l2: () => 'Saying what is out of scope is part of the answer. Where in your notes could you write that down?',
-    l3: () => 'On its own line, type "---". Anything you list below it counts as out of scope, for example things that are real but not central.',
+    l2: () => 'Saying what is out of scope is part of the answer. Where in your Functional requirements could you write that down?',
+    l3: () => 'Add a bullet that is just "---". Anything you list below it counts as out of scope, for example features that are real but not central.',
   },
   spoilers: [],
   resolvedBy: 'Adding a "---" line followed by what is deliberately left out.',

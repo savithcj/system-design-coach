@@ -120,7 +120,7 @@ export async function runFixtureWithModel(fx: Fixture, model: CoachModel, timeou
     const violation = violations.find((x) => x.ruleId === m.ruleId)
     const seed = scriptedText(m, violation, state.stage)
     const rule = m.ruleId ? ruleById(m.ruleId) : undefined
-    const req = buildRequest({ state, log: fx.events, stage: state.stage, move: m, violation, seed })
+    const req = buildRequest({ state, log: fx.events, stage: state.stage, move: m, violation, seed, problem: { title: problem.title, prompt: problem.prompt } })
     const ctx = { state, problem, stage: state.stage, ruleSpoilers: rule?.spoilers, allowRuleSpoilers: m.level === 3, timeoutMs }
     r.phrasings++
     const raw = await attempt(model, req, false, timeoutMs)

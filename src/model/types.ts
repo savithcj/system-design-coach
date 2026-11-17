@@ -7,6 +7,8 @@ export type ModelStatus = 'idle' | 'loading' | 'ready' | 'error'
  * solution wording unless the learner confirmed level 3 (then it is already inside `seed`).
  */
 export interface TurnRequest {
+  /** What the learner is designing. Both fields are already on their screen. */
+  problem: { title: string; prompt: string }
   stage: number
   move: MoveKind
   level: 1 | 2 | 3
