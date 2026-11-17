@@ -9,11 +9,12 @@ export type ContractBlock = 'functional' | 'outofscope' | 'nonfunctional' | 'ent
 export interface PayloadMap {
   ProblemLoaded: { problemId: string }
   // fx is the 0..1 horizontal fraction of the free width, y is pixels; both are pinned at creation.
-  NodeAdded: { id: string; role: Role; label: string; fx?: number; y?: number }
+  /** `via` ('chat:<seq of the learner's message>') marks a change the coach made from the learner's chat message. */
+  NodeAdded: { id: string; role: Role; label: string; fx?: number; y?: number; via?: string }
   NodeMoved: { id: string; fx: number; y: number }
   NodeRenamed: { id: string; label: string }
   NodeDeleted: { id: string }
-  EdgeAdded: { id: string; a: string; b: string; pa?: Port; pb?: Port }
+  EdgeAdded: { id: string; a: string; b: string; pa?: Port; pb?: Port; via?: string }
   EdgeDeleted: { id: string }
   LayoutReset: { pos: Record<string, { fx: number; y: number }> }
   /** The stage the learner (or, later, the coach) is working in: 1 Requirements .. 5 Deep dives. */
@@ -21,9 +22,9 @@ export interface PayloadMap {
   /** The learner chose how hard the coach should push. Not board-undoable. */
   LevelSet: { level: Level }
   /** Full text of one contract block after an edit (debounced while typing, flushed on blur). Not board-undoable. */
-  ContractNoteUpdated: { block: ContractBlock; text: string }
+  ContractNoteUpdated: { block: ContractBlock; text: string; via?: string }
   /** A floating note on the canvas. fx is the 0..1 horizontal fraction of the free width, y is pixels. */
-  StickyAdded: { id: string; fx: number; y: number; text: string }
+  StickyAdded: { id: string; fx: number; y: number; text: string; via?: string }
   StickyEdited: { id: string; text: string }
   StickyMoved: { id: string; fx: number; y: number }
   StickyDeleted: { id: string }

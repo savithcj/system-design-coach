@@ -8,7 +8,16 @@ const UNDOABLE: ReadonlySet<string> = new Set([
   'StickyAdded', 'StickyEdited', 'StickyMoved', 'StickyDeleted',
 ])
 
-export const isUndoable = (e: { type: string; actor: string }): boolean => e.actor === 'user' && UNDOABLE.has(e.type)
+/** What the coach may change from a chat message, and what undo then covers (the learner's own typing in a note box is not undoable). */
+const CHAT_UNDOABLE: ReadonlySet<string> = new Set(['NodeAdded', 'EdgeAdded', 'ContractNoteUpdated', 'StickyAdded'])
+
+export const chatVia = (e: { payload: unknown }): string | null => {
+  const v = (e.payload as { via?: unknown } | null)?.via
+  return typeof v === 'string' && v.startsWith('chat:') ? v : null
+}
+
+export const isUndoable = (e: { type: string; actor: string; payload?: unknown }): boolean =>
+  (e.actor === 'user' && UNDOABLE.has(e.type)) || (e.actor === 'coach' && CHAT_UNDOABLE.has(e.type) && chatVia({ payload: e.payload }) !== null)
 
 /** One step of undo: usually one event; a box's creation and its immediate naming are a single step. */
 export interface ActionGroup { id: number; seqs: number[] }
@@ -16,10 +25,19 @@ export interface ActionGroup { id: number; seqs: number[] }
 export function actionGroups(log: EventLog): ActionGroup[] {
   const groups: ActionGroup[] = []
   let justAdded: { nodeId: string; group: ActionGroup } | null = null
+  let chatGroup: { via: string; group: ActionGroup } | null = null
   for (const raw of log) {
     const e = raw as KnownEvent
     if (e.type === 'UserActionUndone' || e.type === 'UserActionRedone') { justAdded = null; continue }
     if (!isUndoable(e)) continue
+    // Everything the coach changed from one chat message is one undo step.
+    const via = chatVia(e)
+    if (via) {
+      if (chatGroup && chatGroup.via === via) { chatGroup.group.seqs.push(e.seq); continue }
+      const group = { id: e.seq, seqs: [e.seq] }
+      groups.push(group); chatGroup = { via, group }; justAdded = null
+      continue
+    }
     if (e.type === 'NodeRenamed' && justAdded && justAdded.nodeId === e.payload.id) {
       justAdded.group.seqs.push(e.seq)
       justAdded = null
