@@ -138,3 +138,12 @@ describe('report by stage', () => {
     expect(reduce(s.log).stage).toBe(4)
   })
 })
+
+describe('bulleted notes', () => {
+  it('reads the divider even when the box put a bullet in front of it', () => {
+    const p = parseBlock('• shorten a URL\n• ---\n• analytics')
+    expect(p.inScope).toEqual(['shorten a URL'])
+    expect(p.outOfScope).toEqual(['analytics'])
+    expect(p.hasDivider).toBe(true)
+  })
+})

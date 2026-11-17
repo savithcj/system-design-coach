@@ -15,6 +15,35 @@ const LABELS: Readonly<Record<ContractBlock, string>> = {
 /** Typing is saved this long after the last keystroke, and immediately on blur. */
 const DEBOUNCE_MS = 400
 
+const BULLET = '•'
+
+/** Inserts through the editing pipeline so the browser's own undo still works. */
+function insert(ta: HTMLTextAreaElement, text: string): void {
+  if (!document.execCommand('insertText', false, text)) { ta.setRangeText(text, ta.selectionStart, ta.selectionEnd, 'end'); ta.dispatchEvent(new Event('input', { bubbles: true })) }
+}
+
+/** Every line of a notes box is a bullet: focus starts one, Enter adds one, Enter or Backspace on an empty one ends it. */
+function wireBullets(ta: HTMLTextAreaElement): void {
+  ta.addEventListener('focus', () => {
+    if (ta.value.trim() === '') { ta.value = `${BULLET} `; ta.setSelectionRange(ta.value.length, ta.value.length) }
+  })
+  ta.addEventListener('keydown', (e) => {
+    if (e.isComposing || e.shiftKey || e.metaKey || e.ctrlKey || e.altKey || ta.selectionStart !== ta.selectionEnd) return
+    const at = ta.selectionStart
+    const lineStart = ta.value.lastIndexOf('\n', at - 1) + 1
+    const before = ta.value.slice(lineStart, at)
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      if (before.trim() === BULLET) { ta.setSelectionRange(lineStart, at); insert(ta, '') } // Enter on an empty bullet ends the list
+      else insert(ta, `\n${BULLET} `)
+    } else if (e.key === 'Backspace' && before === `${BULLET} `) {
+      e.preventDefault()
+      ta.setSelectionRange(Math.max(0, lineStart - 1), at) // the bullet and the line break before it
+      insert(ta, '')
+    }
+  })
+}
+
 const area = (b: ContractBlock) => $<HTMLTextAreaElement>(`cnote-${b}`)
 
 /**
@@ -33,7 +62,8 @@ export function initContract(): void {
     let timer: ReturnType<typeof setTimeout> | undefined
     const commit = () => {
       clearTimeout(timer); timer = undefined
-      const text = area(b).value
+      // A bullet with nothing after it is not content (an untouched box is just "• ").
+      const text = area(b).value.split('\n').filter((l) => l.trim() !== BULLET).join('\n')
       if (text === getState().contract[b]) return
       record('ContractNoteUpdated', { block: b, text })
       renderDetails(getState())
@@ -41,6 +71,7 @@ export function initContract(): void {
     const ta = area(b)
     ta.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(commit, DEBOUNCE_MS) })
     ta.addEventListener('blur', commit)
+    wireBullets(ta)
     $(`chead-${b}`).addEventListener('click', () => { ui.open[b] = !ui.open[b]; syncContract(getState()) })
   }
 }

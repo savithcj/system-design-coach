@@ -21,8 +21,9 @@ export function parseBlock(text: string): ParsedBlock {
   for (const raw of text.split(/\r?\n/)) {
     const line = raw.trim()
     if (!line) continue
-    if (DIVIDER.test(line)) { below = true; continue }
     const clean = line.replace(BULLET, '').trim()
+    // The notes box adds "• " to each line, so the divider is recognised after the bullet is stripped.
+    if (DIVIDER.test(clean)) { below = true; continue }
     if (clean) (below ? outOfScope : inScope).push(clean)
   }
   return { inScope, outOfScope, hasDivider: below }

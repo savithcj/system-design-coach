@@ -9,7 +9,7 @@ import { checkReply, MAX_CHARS_L3 } from './grounding'
 import { historyOf, stageHasContent } from './history'
 import { nextNudge } from './nudge'
 import { ruleById } from './rules/registry'
-import { POINT_TO_NOTES, scriptedText } from './script'
+import { pointToNotes, scriptedText } from './script'
 import { selectMove, type CoachMove } from './selector'
 
 export type Trigger =
@@ -96,7 +96,7 @@ export function planTurnFull(log: EventLog, problem: Problem, trigger: Trigger):
   const nudge = !rule && move.kind === 'ask_clarifying' && stage >= 4 ? nextNudge(problem, state) : null
   let message = scriptedText(move, violation, stage, nudge)
   // Asking again without changing the board must not get the same line back.
-  if (!rule && move.kind === 'ask_clarifying' && trigger.kind !== 'stage' && repeatsClarifying(log)) message = POINT_TO_NOTES
+  if (!rule && move.kind === 'ask_clarifying' && trigger.kind !== 'stage' && repeatsClarifying(log)) message = pointToNotes(stage)
   const gate = checkReply({ message, state, problem, stage, ruleSpoilers: rule?.spoilers, allowRuleSpoilers: move.level === 3, maxChars: MAX_CHARS_L3 })
   if (gate.ok) job = { index: -1, move, violation, stage, seed: message, ruleSpoilers: rule?.spoilers, allowRuleSpoilers: move.level === 3 }
   else {

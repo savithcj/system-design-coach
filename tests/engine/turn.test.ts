@@ -42,7 +42,7 @@ describe('"Stuck?"', () => {
 
   it('with nothing flagged it gives the stage question, or the problem\'s question about a missing category from stage 4', () => {
     const b = board(); b.stage(2)
-    expect(said(turn(b, { kind: 'stuck' }))[0]).toMatch(/Names alone/)
+    expect(said(turn(b, { kind: 'stuck' }))[0]).toMatch(/names alone/i)
     const c = board(); c.stage(4)
     expect(said(turn(c, { kind: 'stuck' }, url))[0]).toBe('Every design starts with who uses the system.')
     const ph = c.node('client', 'Phone'), sv = c.node('service', 'Anything'), db = c.node('db', 'Store'); c.edge(ph, sv); c.edge(sv, db)

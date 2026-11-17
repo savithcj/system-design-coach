@@ -50,7 +50,7 @@ test.describe('stage pill', () => {
     await expect(node(page, 'Web app')).toBeVisible()
     await stage(page, 5).click()
     await note(page, 'functional').fill('still editable during deep dives'); await page.locator('body').click({ position: { x: 5, y: 400 } })
-    expect((await state(page)).contract.functional).toBe('still editable during deep dives')
+    expect((await state(page)).contract.functional).toMatch(/still editable during deep dives$/)
   })
 
   test('keyboard: arrows move focus only, Enter or Space chooses', async ({ page }) => {
@@ -114,7 +114,7 @@ test.describe('contract notes', () => {
     expect(await page.evaluate(() => (document.querySelector('[data-node]') as any).__mark)).toBe('same element')
     await page.keyboard.type('\n--- \npayments'.replace(' ', ''))
     await page.waitForTimeout(700)
-    expect((await state(page)).contract.functional).toBe('search events by name and date\n---\npayments')
+    expect((await state(page)).contract.functional).toBe('• search events by name and date\n• ---\n• payments')
     await expect(note(page, 'functional')).toBeFocused()
     expect(await page.evaluate(() => (document.querySelector('[data-node]') as any).__mark)).toBe('same element')
   })
@@ -123,7 +123,7 @@ test.describe('contract notes', () => {
     await page.goto('/')
     await note(page, 'nonfunctional').click(); await page.keyboard.type('p99 under 200 ms for search')
     await head(page, 'functional').focus() // blur right away, before the pause elapses
-    expect((await state(page)).contract.nonfunctional).toBe('p99 under 200 ms for search')
+    expect((await state(page)).contract.nonfunctional).toBe('• p99 under 200 ms for search')
   })
 
   test('text belongs to its session, and is saved when switching problems mid-typing', async ({ page }) => {
@@ -133,9 +133,9 @@ test.describe('contract notes', () => {
     await expect(note(page, 'functional')).toHaveValue('')
     await note(page, 'functional').click(); await page.keyboard.type('limit per client')
     await page.locator('#seg [data-id=url]').click()
-    await expect(note(page, 'functional')).toHaveValue('shorten a url')
+    await expect(note(page, 'functional')).toHaveValue('• shorten a url')
     await page.locator('#seg [data-id=rate]').click()
-    await expect(note(page, 'functional')).toHaveValue('limit per client')
+    await expect(note(page, 'functional')).toHaveValue('• limit per client')
   })
 
   test('opening a problem on its own stage re-expands that stage\'s blocks; Start over clears the text', async ({ page }) => {
@@ -208,4 +208,22 @@ test('the report is organised by stage, with time against the targets and the co
   await expect(body).toContainText('search events'); await expect(body).toContainText('Out of scope'); await expect(body).toContainText('payments')
   const tex = await page.locator('#texSrc').inputValue()
   expect(tex).toContain('\\section{Time per stage}'); expect(tex).toContain('\\emph{Out of scope}')
+})
+
+test('notes are bullets: focus starts one, Enter adds one, Backspace on an empty one ends it, an untouched box stores nothing', async ({ page }) => {
+  await page.goto('/?coach=scripted')
+  const ta = page.locator('#cnote-functional')
+  await ta.focus()
+  await expect(ta).toHaveValue('• ')
+  await page.keyboard.type('shorten a URL')
+  await page.keyboard.press('Enter')
+  await expect(ta).toHaveValue('• shorten a URL\n• ')
+  await page.keyboard.press('Backspace')
+  await expect(ta).toHaveValue('• shorten a URL')
+  await ta.blur()
+  expect((await events(page)).filter((e) => e.type === 'ContractNoteUpdated').pop()!.payload.text).toBe('• shorten a URL')
+  const other = page.locator('#cnote-nonfunctional')
+  await other.focus(); await other.blur()
+  expect((await events(page)).filter((e) => e.type === 'ContractNoteUpdated' && e.payload.block === 'nonfunctional')).toHaveLength(0)
+  await page.screenshot({ path: 'test-results/bullets.png' })
 })
