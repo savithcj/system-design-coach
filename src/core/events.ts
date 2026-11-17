@@ -28,7 +28,7 @@ export interface PayloadMap {
   UserActionUndone: { targetSeq: number }
   UserActionRedone: { targetSeq: number }
   UserMessaged: { text: string }
-  CoachResponded: { kind: 'opening' | 'reply' | 'hint' | 'ack'; message: string; level?: number; ruleId?: string; move?: string; stage?: number }
+  CoachResponded: { kind: 'opening' | 'reply' | 'hint' | 'ack'; message: string; level?: number; ruleId?: string; move?: string; stage?: number; by?: string }
   /** "Stuck?" was pressed; level is the hint level served (1..3). ruleId is absent when nothing was flagged. */
   HintRequested: { level: number; ruleId?: string }
   /** System: a rule's check started failing. Emitted only when the set of failing rules changes. */

@@ -7,6 +7,9 @@ import type { CoachModel, TurnRequest } from './types'
 
 export const MODEL_TIMEOUT_MS = 8000
 
+/** Dev only: ?coachTimeout=600 shortens the wait so a hung model can be tested quickly. */
+export const timeoutMs = (): number => (import.meta.env.DEV ? Number(new URLSearchParams(location.search).get('coachTimeout')) || MODEL_TIMEOUT_MS : MODEL_TIMEOUT_MS)
+
 export interface PhraseContext {
   state: State
   problem: EngineProblem

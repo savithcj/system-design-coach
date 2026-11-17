@@ -1,16 +1,48 @@
 import { problemById } from '../problems'
 import { evaluate } from '../engine/evaluate'
 import { syncRules } from '../engine/track'
-import { planTurn, type Trigger } from '../engine/turn'
+import { planTurnFull, type Planned, type Trigger } from '../engine/turn'
+import { currentModel, setThinking } from '../model/manager'
+import { phraseWithModel, timeoutMs } from '../model/orchestrate'
+import { buildRequest } from '../model/request'
 import { renderDetails } from './details'
 import { getLog, getState, record, render } from './store'
 
-/** Ask the engine what to say and append it. Everything the coach does is an event. */
-export function coachTurn(trigger: Trigger): void {
+let busy = false
+
+/**
+ * Ask the engine what to say and append it. Everything the coach does is an event. The engine has already chosen
+ * the move and its scripted wording; a local model, when one is ready, may only reword it, and anything it says
+ * goes through the grounding gate first.
+ */
+export async function coachTurn(trigger: Trigger, learnerMessage?: string): Promise<void> {
+  if (busy) return // one reply at a time; extra presses while the model is writing do nothing
   const state = getState()
-  const plan = planTurn(getLog(), problemById(state.problemId), trigger)
-  for (const e of plan) record(e.type, e.payload, e.actor)
-  if (plan.length) render()
+  const problem = problemById(state.problemId)
+  const log = getLog()
+  const { events, job } = planTurnFull(log, problem, trigger)
+  let out: Planned[] = events
+
+  const model = currentModel()
+  if (job && model.id !== 'scripted' && model.status() === 'ready') {
+    busy = true
+    setThinking(true)
+    try {
+      const req = buildRequest({ state, log, stage: job.stage, move: job.move, violation: job.violation, seed: job.seed, learnerMessage })
+      const r = await phraseWithModel(model, req, { state, problem, stage: job.stage, ruleSpoilers: job.ruleSpoilers, allowRuleSpoilers: job.allowRuleSpoilers, timeoutMs: timeoutMs() })
+      out = events.flatMap((e, i): Planned[] => {
+        if (i !== job.index) return [e]
+        const rejected = r.rejections.map((reason): Planned => ({ type: 'CoachReplyRejected', payload: { reason, move: job.move.kind }, actor: 'system' }))
+        const reply = { ...e, payload: { ...(e.payload as object), message: r.message, ...(r.by !== 'scripted' ? { by: r.by } : {}) } } as Planned
+        return [...rejected, reply]
+      })
+    } finally {
+      setThinking(false)
+      busy = false
+    }
+  }
+  for (const e of out) record(e.type, e.payload, e.actor)
+  if (out.length) render()
 }
 
 /**
@@ -31,3 +63,4 @@ export function syncRulesNow(): void {
   for (const c of changes) record(c.type, c.payload, 'system')
   if (changes.length) renderDetails(getState())
 }
+

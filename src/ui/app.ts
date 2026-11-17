@@ -1,3 +1,4 @@
+import { startModel } from '../model/manager'
 import { PROBLEMS, problemById } from '../problems'
 import { $, syncRove } from './dom'
 import { scheduleRuleSync } from './coach'
@@ -45,5 +46,6 @@ export function startApp(): void {
   setRenderer(render)
   setUserEventHook(scheduleRuleSync)
   initTopbar(); initStages(); initContract(); initBoard(); initChat(); initDetails(); initReport(); initResizer()
+  startModel()
   loadProblem(PROBLEMS[0]!.id)
 }

@@ -38,7 +38,7 @@ export function initStages(): void {
     else {
       const from = getState().stage
       dispatch('StageChanged', { stage: n })
-      coachTurn({ kind: 'stage', from, to: n })
+      void coachTurn({ kind: 'stage', from, to: n })
     }
     say(`Stage ${n}, ${STAGES[n - 1]!.label}.`)
   })
