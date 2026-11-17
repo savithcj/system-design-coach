@@ -1,7 +1,7 @@
 import { startModel } from '../model/manager'
-import { PROBLEMS, problemById } from '../problems'
+import { PROBLEMS, TABS, problemById } from '../problems'
 import { $, syncRove } from './dom'
-import { scheduleRuleSync } from './coach'
+import { scheduleRuleSync, syncRulesNow } from './coach'
 import { initBoard, renderBoard } from './board'
 import { fitSticky } from './stickies'
 import { initContract, syncContract } from './contract'
@@ -52,5 +52,10 @@ export function startApp(): void {
   setUserEventHook(scheduleRuleSync)
   initTopbar(); initStages(); initContract(); initBoard(); initChat(); initDetails(); initReport(); initResizer()
   startModel()
-  loadProblem(PROBLEMS[0]!.id)
+  // First visit starts with the practice round. A ?problem=<id> link wins; automated browsers keep the old default.
+  let seen = false
+  try { seen = localStorage.getItem('sdc-tutorial-seen') === '1' } catch { /* private window */ }
+  const asked = new URLSearchParams(location.search).get('problem')
+  loadProblem(asked && TABS.some((p) => p.id === asked) ? asked : !seen && !navigator.webdriver ? 'tutorial' : PROBLEMS[0]!.id)
+  syncRulesNow()
 }

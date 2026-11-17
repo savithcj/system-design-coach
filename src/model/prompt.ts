@@ -49,11 +49,15 @@ export function parseReply(raw: string): { message: string; aboutRuleId?: string
 
 export const INTERPRET_PROMPT = `You turn a learner's chat message into edits of their design workspace.
 The workspace has note boxes (functional, outofscope, nonfunctional, entities, api), components (category client, service, cache, db, blob, queue or other) and arrows between components, plus floating notes.
-Output actions only for design content the learner states or asks for: an answer to the coach's last question, a requirement, an entity, an API call, a component to add, an arrow to draw, or a note to keep. Copy their own words. Add nothing of your own. One message can need several actions: output one action for every separate thing they ask for, in the order they say it.
+Output actions only for design content the learner states or asks for: an answer to the coach's last question, a requirement, an entity, an API call, a component to add, an arrow to draw, or a note to keep. Copy words only from learnerMessage, never from lastCoachLine or anything else. Add nothing of your own. One message can need several actions: output one action for every separate thing they ask for, in the order they say it.
 Choose the box that fits: stage 1 is functional, outofscope or nonfunctional; stage 2 is entities; stage 3 is api.
+functional is what the system does or lets people do (an action). nonfunctional is how well it does it: speed, size, uptime, a number. outofscope is what they say they are not building. entities are the nouns it keeps track of. api is the calls a client makes.
+A thing the system should do or allow is a requirement for a notes box, never a component. Components are only for things the learner says to add or draw, such as a cache, a server or a database. Never name a component after the problem itself.
 Output no actions for questions, "idk", greetings, thanks, or asking the coach to tell or explain something.
 Examples:
 "users paste a url and get a short one back" -> {"actions":[{"kind":"write","block":"functional","bullets":["paste a url","get a short one back"]}]}
+"it should also let people delete a link" -> {"actions":[{"kind":"write","block":"functional","bullets":["let people delete a link"]}]}
+"redirects must take under 100 ms" -> {"actions":[{"kind":"write","block":"nonfunctional","bullets":["redirects under 100 ms"]}]}
 "add a redis cache" -> {"actions":[{"kind":"add_component","category":"cache","label":"Redis"}]}
 "add a web app and a postgres database and connect them" -> {"actions":[{"kind":"add_component","category":"client","label":"Web app"},{"kind":"add_component","category":"db","label":"Postgres"},{"kind":"connect","from":"Web app","to":"Postgres"}]}
 "connect web app to api server" -> {"actions":[{"kind":"connect","from":"Web app","to":"API server"}]}

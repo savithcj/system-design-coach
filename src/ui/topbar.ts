@@ -1,4 +1,4 @@
-import { PROBLEMS } from '../problems'
+import { TABS } from '../problems'
 import { $, rove, syncRove } from './dom'
 import { syncRulesNow } from './coach'
 import { openReport } from './report'
@@ -13,14 +13,19 @@ export function syncSeg(id: string | null): void {
 
 export function initTopbar(): void {
   const seg = $('seg')
-  for (const p of PROBLEMS) {
+  for (const p of TABS) {
     const b = document.createElement('button')
     b.type = 'button'; b.setAttribute('role', 'radio'); b.dataset['id'] = p.id; b.textContent = p.short
     seg.appendChild(b)
   }
   seg.addEventListener('click', (e) => {
     const b = (e.target as Element).closest<HTMLElement>('[role=radio]')
-    if (b && b.dataset['id'] !== currentProblemId()) loadProblem(b.dataset['id']!)
+    if (b && b.dataset['id'] !== currentProblemId()) {
+      // Leaving the practice round counts as having seen it, so it is not the first thing next time.
+      if (currentProblemId() === 'tutorial') { try { localStorage.setItem('sdc-tutorial-seen', '1') } catch { /* private window */ } }
+      loadProblem(b.dataset['id']!)
+      syncRulesNow() // the practice round says its first step as soon as it opens
+    }
   })
   rove(seg, '[role=radio]', true)
   rove($('toolbar'), '.btn', false)

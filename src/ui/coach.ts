@@ -1,4 +1,5 @@
 import { planChatEdits } from '../engine/chatEdit'
+import { tutorialAnnounce, tutorialProgress, tutorialRemind, STEPS, type TutorialLine, type TutorialOpts } from '../engine/tutorial'
 import { problemById } from '../problems'
 import { evaluate } from '../engine/evaluate'
 import { syncRules } from '../engine/track'
@@ -21,6 +22,7 @@ export async function coachTurn(trigger: Trigger, learnerMessage?: string): Prom
   const model = currentModel()
   const problem = problemById(getState().problemId)
   let edited = false
+  const turnStart = getLog().length
 
   // The learner's chat message may ask for board changes. The model proposes, code validates every action against the
   // learner's own words, and the result is one undoable step of coach events tagged with the message they came from.
@@ -29,7 +31,7 @@ export async function coachTurn(trigger: Trigger, learnerMessage?: string): Prom
     setThinking(true)
     try {
       const before = getState()
-      const raw = await interpretChat(model, buildInterpretRequest(before, getLog(), learnerMessage, problem.title), timeoutMs())
+      const raw = await interpretChat(model, buildInterpretRequest(before, getLog(), learnerMessage, problem.title, !problem.tutorial), timeoutMs())
       const via = `chat:${getLog()[getLog().length - 1]!.seq}`
       const plan = planChatEdits(raw, learnerMessage, before, via, Math.max(260, document.getElementById('boardCol')?.clientWidth ?? 800))
       // Rejections go in the log (never shown) so evals and the dev console can see what the model proposed and why it was refused.
@@ -46,6 +48,18 @@ export async function coachTurn(trigger: Trigger, learnerMessage?: string): Prom
       setThinking(false)
       busy = false
     }
+  }
+
+  if (problem.tutorial) {
+    // The practice round has no rules: its lines are fixed and follow what the learner has done.
+    if (trigger.kind === 'stage') return
+    if (trigger.kind === 'stuck' && tutorialProgress(getState(), getLog()) === STEPS.length - 1) record('HintRequested', { level: 1 }, 'coach')
+    // The edit phase above may already have announced the next step; do not follow it with a reminder.
+    const announcedNow = getLog().slice(turnStart).some((e) => e.type === 'CoachResponded' && (e.payload as { move?: string }).move === 'tutorial')
+    const line = tutorialAnnounce(getState(), getLog(), tutorialOpts()) ?? (announcedNow ? null : tutorialRemind(getState(), getLog(), tutorialOpts()))
+    if (line) sayTutorial(line)
+    render()
+    return
   }
 
   const state = getState()
@@ -83,10 +97,23 @@ export function scheduleRuleSync(): void {
   timer = setTimeout(syncRulesNow, 700)
 }
 
+/** The practice round can say "chat writes to the board" only when the model that does that is ready. */
+const tutorialOpts = (): TutorialOpts => ({ chatEdits: currentModel().id !== 'scripted' && currentModel().status() === 'ready' && !!currentModel().interpret })
+
+function sayTutorial(line: TutorialLine): void {
+  record('CoachResponded', { kind: 'reply', message: line.message, ruleId: line.ruleId, move: 'tutorial', stage: getState().stage }, 'coach')
+  if (line.step >= STEPS.length) { try { localStorage.setItem('sdc-tutorial-seen', '1') } catch { /* private window */ } }
+}
+
 export function syncRulesNow(): void {
   clearTimeout(timer)
   const state = getState()
   if (!state.problemId) return
+  if (problemById(state.problemId).tutorial) {
+    const line = tutorialAnnounce(state, getLog(), tutorialOpts())
+    if (line) { sayTutorial(line); render() }
+    return
+  }
   const changes = syncRules(getLog(), evaluate(state, problemById(state.problemId)))
   for (const c of changes) record(c.type, c.payload, 'system')
   if (changes.length) renderDetails(getState())

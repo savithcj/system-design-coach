@@ -14,8 +14,8 @@ const clip = (s: string): string => (s.length > MAX_TURN_CHARS ? s.slice(0, MAX_
 export const boxesOf = (state: State): { block: string; text: string }[] =>
   Object.entries(state.contract).filter(([, t]) => t.trim()).map(([block, t]) => ({ block, text: t.length > 300 ? `${t.slice(0, 299)}…` : t }))
 
-export function buildInterpretRequest(state: State, log: EventLog, learnerMessage: string, problemTitle: string): InterpretRequest {
-  const lastCoach = [...log].reverse().find((e) => e.type === 'CoachResponded')
+export function buildInterpretRequest(state: State, log: EventLog, learnerMessage: string, problemTitle: string, withCoachLine = true): InterpretRequest {
+  const lastCoach = withCoachLine ? [...log].reverse().find((e) => e.type === 'CoachResponded') : undefined
   return {
     problem: { title: problemTitle },
     stage: state.stage,

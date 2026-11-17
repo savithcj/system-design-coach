@@ -28,6 +28,8 @@ export interface Problem extends EngineProblem {
   challenges: readonly ProblemChallenge[]
   nudges: readonly Nudge[]
   scaleNotes: { assumptions: readonly string[] }
+  /** The practice round: guided by src/engine/tutorial.ts instead of rules. */
+  tutorial?: true
 }
 
 export interface BaselineNode { id: string; role: Role; label: string; why: string; ddia?: string }

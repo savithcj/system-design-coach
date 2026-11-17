@@ -145,3 +145,10 @@ The model is optional and off by default. The scripted coach is always what runs
 
 ## Thinking bubble
 - While a model is writing, the chat shows a coach-side bubble with three moving dots instead of changing the status text. It is hidden from assistive tech (the live region says "Coach is thinking." once), holds still under reduced motion, and stays up across the two model calls of one chat turn. Requested by the owner.
+
+## Practice round (Tutorial tab)
+- A "Tutorial" tab comes first and is where a first visit starts (a `?problem=<id>` link wins; automated browsers keep the URL shortener; leaving the tutorial or finishing it marks it seen in localStorage). It is a tiny generic problem ("a bookmark saver") with no rules, no hidden answer and no reference design.
+- Seven steps taught by doing, said by the coach in the chat: write a bullet in Functional; send a chat message (with the local model the coach writes it into the notes); add a component; add another and connect them; add a floating note; undo; press Stuck?. Then a closing line pointing at Finish and the real problems. All wording is fixed (no model rewording), in `src/engine/tutorial.ts`.
+- Progress is read from the log of what the learner has done, not from the board or the chat text, so steps can be done in any order, one action can finish several steps, and the undo step cannot take an earlier step back. A chat message or Stuck? with no progress gets "Still on step N of 7" plus that step's text.
+- Added at the owner's request; not in docs/02. Axe is clean in light and dark.
+- Found by driving the real model through the tutorial: it named a component after the problem, put a feature under Non-functional, and copied an example from the coach's own line. The interpret prompt now defines each box, says features are never components, and says to copy words only from the learner's message; the practice round also omits the coach's last line from that request.
