@@ -7,7 +7,7 @@ const RESERVE = ['reserv*', 'hold*', 'lock*', 'claim*']
 const FINAL = ['confirm*', 'finaliz*', 'complet*', 'pay*', 'commit*']
 
 export const rule: Rule = {
-  id: 'API_SINGLE_STEP_BOOKING', stage: 3, severity: 'warn', move: 'probe_bottleneck', minLevel: 'mid', needsChallenge: true,
+  id: 'API_SINGLE_STEP_BOOKING', title: 'Booking in a single step', stage: 3, severity: 'warn', move: 'probe_bottleneck', minLevel: 'mid', needsChallenge: true,
   applies: (s) => parseBlock(s.contract.api).inScope.length > 0,
   check(s) {
     const ls = parseBlock(s.contract.api).inScope

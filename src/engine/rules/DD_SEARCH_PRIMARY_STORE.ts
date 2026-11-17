@@ -4,7 +4,7 @@ import type { Rule } from '../types'
 import { isIndexNode } from './search'
 
 export const rule: Rule = {
-  id: 'DD_SEARCH_PRIMARY_STORE', stage: 5, severity: 'warn', move: 'challenge_assumption', minLevel: 'senior', needsChallenge: true,
+  id: 'DD_SEARCH_PRIMARY_STORE', title: 'Search structure is the only copy of the data', stage: 5, severity: 'warn', move: 'challenge_assumption', minLevel: 'senior', needsChallenge: true,
   applies: (s) => s.nodes.some((n) => isIndexNode(nodeText(n))),
   check(s) {
     const index = s.nodes.filter((n) => isIndexNode(nodeText(n)))

@@ -4,7 +4,7 @@ import type { Rule } from '../types'
 import { PERIODIC, STRONG_EXPIRY, hasReservation } from './reservation'
 
 export const rule: Rule = {
-  id: 'DD_CRON_STALE_WINDOW', stage: 5, severity: 'warn', move: 'probe_bottleneck', minLevel: 'mid', needsChallenge: true,
+  id: 'DD_CRON_STALE_WINDOW', title: 'Expiry only by a periodic cleanup', stage: 5, severity: 'warn', move: 'probe_bottleneck', minLevel: 'mid', needsChallenge: true,
   applies: (s) => hasReservation(s),
   check(s) {
     const text = allText(s)

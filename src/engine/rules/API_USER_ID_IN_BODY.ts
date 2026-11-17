@@ -9,7 +9,7 @@ const AUTH = ['header', 'token', 'jwt', 'bearer', 'session', 'cookie', 'auth*']
 const withoutPathParams = (line: string): string => line.replace(/\/[{:]\s*\w+\s*\}?/g, '/')
 
 export const rule: Rule = {
-  id: 'API_USER_ID_IN_BODY', stage: 3, severity: 'warn', move: 'challenge_assumption', minLevel: 'mid',
+  id: 'API_USER_ID_IN_BODY', title: 'Caller identity sent in the request body', stage: 3, severity: 'warn', move: 'challenge_assumption', minLevel: 'mid',
   applies: (s) => parseBlock(s.contract.api).inScope.length > 0,
   check(s) {
     const bad = parseBlock(s.contract.api).inScope.filter(

@@ -5,7 +5,7 @@ import type { Rule } from '../types'
 const MAX = 4
 
 export const rule: Rule = {
-  id: 'REQ_TOO_MANY_FEATURES', stage: 1, severity: 'warn', move: 'challenge_assumption', minLevel: 'mid',
+  id: 'REQ_TOO_MANY_FEATURES', title: 'Too many features for a first pass', stage: 1, severity: 'warn', move: 'challenge_assumption', minLevel: 'mid',
   applies: (s) => parseBlock(s.contract.functional).inScope.length > 0,
   check(s) {
     const items = parseBlock(s.contract.functional).inScope

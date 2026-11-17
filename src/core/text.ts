@@ -12,6 +12,7 @@ export function texEscape(s: string): string {
   return String(s)
     .replace(/[\\&%$#_{}~^]/g, (c) => TEX_ESCAPES[c]!)
     .replace(/→/g, '$\\rightarrow$')
+    .replace(/[\u2018\u2019]/g, "'").replace(/[\u201c\u201d]/g, '"').replace(/[\u2013\u2014]/g, '-').replace(/\u2026/g, '...')
     // eslint-disable-next-line no-control-regex
     .replace(/[^\x00-\x7F]/g, '?')
 }

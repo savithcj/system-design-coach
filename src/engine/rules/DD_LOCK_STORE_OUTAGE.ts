@@ -9,7 +9,7 @@ const FALLBACK = ['fallback', 'fall back', 'failover', 'fail over', 'replica*', 
   'backup', 'degrad*', 'fail open', 'fail closed', 'unique constraint', 'constraint', 'optimistic', 'version check', 'conditional update', 'reconcil*']
 
 export const rule: Rule = {
-  id: 'DD_LOCK_STORE_OUTAGE', stage: 5, severity: 'warn', move: 'scale_curveball', minLevel: 'senior', needsChallenge: true,
+  id: 'DD_LOCK_STORE_OUTAGE', title: 'No plan for the hold store failing', stage: 5, severity: 'warn', move: 'scale_curveball', minLevel: 'senior', needsChallenge: true,
   applies: (s) => matchingNodes(s, (t, n) => n.role === 'cache' && has(t, HOLDS)).length > 0,
   check(s) {
     if (has(allText(s), FALLBACK)) return null

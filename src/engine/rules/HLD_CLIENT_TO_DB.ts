@@ -2,7 +2,7 @@ import { nodeName } from '../../core/state'
 import type { Rule } from '../types'
 
 export const rule: Rule = {
-  id: 'HLD_CLIENT_TO_DB', stage: 4, severity: 'warn', move: 'challenge_assumption', minLevel: 'mid',
+  id: 'HLD_CLIENT_TO_DB', title: 'Client connected straight to a database', stage: 4, severity: 'warn', move: 'challenge_assumption', minLevel: 'mid',
   applies: (s) => s.edges.length > 0,
   check(s) {
     const role = (id: string) => s.nodes.find((n) => n.id === id)?.role

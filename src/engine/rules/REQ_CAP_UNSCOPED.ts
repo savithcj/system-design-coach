@@ -6,7 +6,7 @@ const CONSISTENCY = ['consisten*']
 const AVAILABILITY = ['availab*']
 
 export const rule: Rule = {
-  id: 'REQ_CAP_UNSCOPED', stage: 1, severity: 'warn', move: 'challenge_assumption', minLevel: 'mid',
+  id: 'REQ_CAP_UNSCOPED', title: 'Consistency and availability not scoped to paths', stage: 1, severity: 'warn', move: 'challenge_assumption', minLevel: 'mid',
   applies: (s) => parseBlock(s.contract.nonfunctional).inScope.length > 0,
   check(s) {
     const ls = parseBlock(s.contract.nonfunctional).inScope

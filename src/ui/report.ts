@@ -21,6 +21,7 @@ export function renderReport(): void {
   $('reportBody').innerHTML = renderHtml(r)
   $<HTMLTextAreaElement>('texSrc').value = renderLatex(r)
   void drawMermaid(document.getElementById('mmFinal'), r.finalMermaid)
+  if (r.reference) void drawMermaid(document.getElementById('mmRef'), r.reference.mermaid)
 }
 
 export function openReport(): void {

@@ -6,7 +6,7 @@ import type { Rule } from '../types'
 const ADMISSION = ['admission', 'waiting room', 'waiting queue', 'virtual queue', 'rate limit*', 'throttl*', 'token bucket', 'queue*']
 
 export const rule: Rule = {
-  id: 'DD_SURGE_NO_CHOKEPOINT', stage: 5, severity: 'warn', move: 'probe_bottleneck', minLevel: 'mid', needsChallenge: true,
+  id: 'DD_SURGE_NO_CHOKEPOINT', title: 'Nothing limits a surge reaching the booking store', stage: 5, severity: 'warn', move: 'probe_bottleneck', minLevel: 'mid', needsChallenge: true,
   applies: (s) => chainConnected(s, ['client', 'service', 'db']),
   check(s) {
     if (byRole(s, 'queue').length || has(allText(s), ADMISSION)) return null

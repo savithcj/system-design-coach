@@ -6,7 +6,10 @@ import { roleLabel } from './roles'
 import { escapeHtml as esc, texEscape as tex } from './text'
 import { CONTRACT_BLOCKS, CONTRACT_TITLES, STAGES, formatClock, stageBySeq, stageTimes } from './stages'
 import { parseBlock } from '../engine/contract'
+import { ruleById } from '../engine/rules/registry'
 import { problemById } from '../problems'
+import { BASELINES } from '../problems/baselines'
+import { mermaidFrom } from './mermaid'
 
 export interface Step { who: 'you' | 'coach' | 'sys'; text: string; seq: number; ts: number; chat?: boolean; raw?: string }
 
@@ -90,6 +93,26 @@ export interface StageSection {
 
 export interface ContractSection { id: string; title: string; inScope: string[]; outOfScope: string[] }
 
+/** One time a rule started failing, and what became of it. */
+export interface FlagSection {
+  ruleId: string
+  title: string
+  stage: number
+  firedAt: string
+  /** Null while it was still open when the session ended. */
+  resolvedAt: string | null
+  resolvedBy: string
+  /** Levels of "Stuck?" hints served for it while it was open. */
+  hints: number[]
+}
+
+/** The reference design, shown only after the session is finished. Never a score: just something to compare with. */
+export interface ReferenceSection {
+  components: { label: string; category: string; why: string; ddia?: string; /** The learner's own box of that category, if they drew one. */ yours: string | null }[]
+  rubrics: { n: number; label: string; text: string }[]
+  mermaid: string
+}
+
 export interface ReportModel {
   title: string
   prompt: string
@@ -98,8 +121,46 @@ export interface ReportModel {
   times: string[]
   stages: StageSection[]
   contract: ContractSection[]
+  flags: FlagSection[]
+  reference?: ReferenceSection
   finalMermaid: string
   stats: { events: number; replies: number; hints: number; duration: string }
+}
+
+function flagsOf(log: EventLog): FlagSection[] {
+  const out: FlagSection[] = []
+  const open = new Map<string, FlagSection>()
+  for (const raw of log) {
+    const e = raw as KnownEvent
+    if (e.type === 'RuleFired') {
+      const r = ruleById(e.payload.ruleId)
+      const f: FlagSection = { ruleId: e.payload.ruleId, title: r?.title ?? e.payload.ruleId, stage: e.payload.stage, firedAt: elapsed(log, e.ts), resolvedAt: null, resolvedBy: r?.resolvedBy ?? '', hints: [] }
+      open.set(f.ruleId, f); out.push(f)
+    } else if (e.type === 'RuleResolved') {
+      const f = open.get(e.payload.ruleId)
+      if (f) { f.resolvedAt = elapsed(log, e.ts); open.delete(f.ruleId) }
+    } else if (e.type === 'HintRequested' && e.payload.ruleId) {
+      open.get(e.payload.ruleId)?.hints.push(e.payload.level)
+    }
+  }
+  return out
+}
+
+/** Only ever called for a finished session, so the reference design cannot reach anyone mid-session. */
+function referenceOf(s: ReturnType<typeof reduce>): ReferenceSection | undefined {
+  const base = BASELINES[s.problemId ?? '']
+  if (!base) return undefined
+  const used = new Map<string, number>()
+  return {
+    components: base.nodes.map((n) => {
+      const k = used.get(n.role) ?? 0
+      used.set(n.role, k + 1)
+      const mine = s.nodes.filter((x) => x.role === n.role)[k]
+      return { label: n.label, category: roleLabel(n.role), why: n.why, ...(n.ddia ? { ddia: n.ddia } : {}), yours: mine?.label ?? null }
+    }),
+    rubrics: STAGES.map((g) => ({ n: g.n, label: g.label, text: problemById(s.problemId).stageRubrics[g.n as 1 | 2 | 3 | 4 | 5] })),
+    mermaid: mermaidFrom(base.nodes, base.edges.map(([a, b]) => ({ a, b }))),
+  }
 }
 
 export function buildReport(log: EventLog): ReportModel {
@@ -123,6 +184,8 @@ export function buildReport(log: EventLog): ReportModel {
       const p = parseBlock(s.contract[id])
       return p.inScope.length || p.outOfScope.length ? [{ id, title: CONTRACT_TITLES[id], inScope: p.inScope, outOfScope: p.outOfScope }] : []
     }),
+    flags: flagsOf(log),
+    ...(s.finished ? { reference: referenceOf(s) } : {}),
     finalMermaid: boardMermaid(s),
     stats: {
       events: log.length,
@@ -158,7 +221,26 @@ export function renderHtml(r: ReportModel): string {
       if (c.outOfScope.length) h += `<div ${muted}>Out of scope</div><ul>${c.outOfScope.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`
     }
   }
+  if (r.flags.length) {
+    h += '<h2>What the coach flagged</h2><ul>'
+    for (const f of r.flags) {
+      const end = f.resolvedAt ? `cleared at ${f.resolvedAt}` : 'still open at the end'
+      const hints = f.hints.length ? ` Hints used: level ${f.hints.join(', level ')}.` : ''
+      h += `<li><b>${esc(f.title)}</b> <span ${muted}>(stage ${f.stage})</span> raised at ${f.firedAt}, ${end}.${hints}${f.resolvedBy ? ` <span ${muted}>Cleared by: ${esc(f.resolvedBy)}</span>` : ''}</li>`
+    }
+    h += '</ul>'
+  }
   h += `<h2>Your design, cleaned up</h2><div class="mm" id="mmFinal"></div><pre>${esc(r.finalMermaid)}</pre>`
+  if (r.reference) {
+    h += `<h2>One reasonable design</h2><div ${muted}>For comparison only. There is no single right answer, and nothing here is a score.</div>`
+    h += '<div class="mm" id="mmRef"></div><ul>'
+    for (const c of r.reference.components) {
+      h += `<li><b>${esc(c.label)}</b> <span ${muted}>(${esc(c.category)})</span>: ${esc(c.why)}${c.ddia ? ` <span ${muted}>Further reading: ${esc(c.ddia)}.</span>` : ''} <i>${c.yours ? `On your board: ${esc(c.yours)}.` : 'Not on your board.'}</i></li>`
+    }
+    h += '</ul><h4>What good looks like, by stage</h4><ul>'
+    for (const g of r.reference.rubrics) h += `<li><b>${g.n}. ${esc(g.label)}:</b> ${esc(g.text)}</li>`
+    h += '</ul>'
+  }
   return `<div class="paper">${h}</div>`
 }
 
@@ -187,7 +269,25 @@ export function renderLatex(r: ReportModel): string {
     }
     L.push('')
   }
+  if (r.flags.length) {
+    L.push('\\section{What the coach flagged}', '\\begin{itemize}')
+    for (const f of r.flags) {
+      const end = f.resolvedAt ? `cleared at ${f.resolvedAt}` : 'still open at the end'
+      const hints = f.hints.length ? ` Hints used: level ${f.hints.join(', level ')}.` : ''
+      L.push(`  \\item \\textbf{${tex(f.title)}} (stage ${f.stage}) raised at ${f.firedAt}, ${end}.${tex(hints)}${f.resolvedBy ? ` Cleared by: ${tex(f.resolvedBy)}` : ''}`)
+    }
+    L.push('\\end{itemize}', '')
+  }
   L.push('\\section{Your design, cleaned up}', '% Render with: mmdc -i final.mmd -o final.pdf', '\\begin{verbatim}', r.finalMermaid, '\\end{verbatim}', '')
+  if (r.reference) {
+    L.push('\\section{One reasonable design}', '\\emph{For comparison only. There is no single right answer, and nothing here is a score.}', '', '\\begin{itemize}')
+    for (const c of r.reference.components) {
+      L.push(`  \\item \\textbf{${tex(c.label)}} (${tex(c.category)}): ${tex(c.why)}${c.ddia ? ` Further reading: ${tex(c.ddia)}.` : ''} \\emph{${c.yours ? `On your board: ${tex(c.yours)}.` : 'Not on your board.'}}`)
+    }
+    L.push('\\end{itemize}', '\\subsection*{What good looks like, by stage}', '\\begin{itemize}')
+    for (const g of r.reference.rubrics) L.push(`  \\item \\textbf{${g.n}. ${tex(g.label)}:} ${tex(g.text)}`)
+    L.push('\\end{itemize}', '', '\\begin{verbatim}', r.reference.mermaid, '\\end{verbatim}', '')
+  }
   L.push(`\\paragraph{Session} ${tex(statLine(r))}`, '', '\\end{document}')
   return L.join('\n')
 }

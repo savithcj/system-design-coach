@@ -4,7 +4,7 @@ import type { Rule } from '../types'
 import { ANY_EXPIRY, hasReservation, reservationSubjects } from './reservation'
 
 export const rule: Rule = {
-  id: 'DD_RESERVATION_NO_EXPIRY', stage: 5, severity: 'warn', move: 'probe_bottleneck', minLevel: 'mid', needsChallenge: true,
+  id: 'DD_RESERVATION_NO_EXPIRY', title: 'Reservations with no expiry', stage: 5, severity: 'warn', move: 'probe_bottleneck', minLevel: 'mid', needsChallenge: true,
   applies: (s) => hasReservation(s),
   check(s) {
     if (has(allText(s), ANY_EXPIRY)) return null

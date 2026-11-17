@@ -6,7 +6,7 @@ const DETAIL = ['varchar', 'bigint', 'int', 'integer', 'uuid', 'timestamp', 'dat
   'not null', 'create table', 'char(', 'qps', 'rps', 'req/s', 'requests per second']
 
 export const rule: Rule = {
-  id: 'ENT_PREMATURE_DETAIL', stage: 2, severity: 'info', move: 'challenge_assumption', minLevel: 'mid',
+  id: 'ENT_PREMATURE_DETAIL', title: 'Column types or traffic numbers too early', stage: 2, severity: 'info', move: 'challenge_assumption', minLevel: 'mid',
   applies: (s) => parseBlock(s.contract.entities).inScope.length > 0,
   check(s) {
     const ls = parseBlock(s.contract.entities).inScope

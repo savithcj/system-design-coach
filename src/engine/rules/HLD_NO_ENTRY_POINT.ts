@@ -6,7 +6,7 @@ import type { Rule } from '../types'
 const GATEWAY = ['gateway', 'load balancer', 'balancer', 'lb', 'proxy', 'nginx', 'haproxy', 'envoy', 'ingress', 'router', 'cdn', 'edge']
 
 export const rule: Rule = {
-  id: 'HLD_NO_ENTRY_POINT', stage: 4, severity: 'info', move: 'ask_clarifying', minLevel: 'mid',
+  id: 'HLD_NO_ENTRY_POINT', title: 'No single entry point in front of several servers', stage: 4, severity: 'info', move: 'ask_clarifying', minLevel: 'mid',
   applies: (s) => byRole(s, 'service').length > 1 && byRole(s, 'client').length > 0,
   check(s) {
     const servers = new Map(byRole(s, 'service').map((n) => [n.id, n]))

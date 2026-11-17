@@ -9,7 +9,7 @@ function vagueLines(text: string): string[] {
 }
 
 export const rule: Rule = {
-  id: 'REQ_VAGUE_NFR', stage: 1, severity: 'warn', move: 'ask_clarifying', minLevel: 'mid',
+  id: 'REQ_VAGUE_NFR', title: 'A quality goal with no number or path', stage: 1, severity: 'warn', move: 'ask_clarifying', minLevel: 'mid',
   applies: (s) => parseBlock(s.contract.nonfunctional).inScope.length > 0,
   check(s) {
     const bad = vagueLines(s.contract.nonfunctional)

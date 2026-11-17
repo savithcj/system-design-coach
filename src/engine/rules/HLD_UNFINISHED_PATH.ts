@@ -3,7 +3,7 @@ import { roleLabel } from '../../core/roles'
 import type { Rule } from '../types'
 
 export const rule: Rule = {
-  id: 'HLD_UNFINISHED_PATH', stage: 4, severity: 'warn', move: 'ask_clarifying', minLevel: 'mid',
+  id: 'HLD_UNFINISHED_PATH', title: 'A key request has no route to storage', stage: 4, severity: 'warn', move: 'ask_clarifying', minLevel: 'mid',
   applies: (s, p) => p.requiredPaths.length > 0 && s.nodes.length > 0,
   check(s, p) {
     const open = p.requiredPaths.filter((r) => !chainConnected(s, [r.from, ...(r.via ?? []), r.to]))

@@ -3,7 +3,7 @@ import { nouns, shorten } from '../text'
 import type { Rule } from '../types'
 
 export const rule: Rule = {
-  id: 'API_NO_COVERAGE', stage: 3, severity: 'warn', move: 'ask_clarifying', minLevel: 'mid',
+  id: 'API_NO_COVERAGE', title: 'A requirement with no API call', stage: 3, severity: 'warn', move: 'ask_clarifying', minLevel: 'mid',
   applies: (s) => parseBlock(s.contract.api).inScope.length > 0 && parseBlock(s.contract.functional).inScope.length > 0,
   check(s) {
     const api = new Set(parseBlock(s.contract.api).inScope.flatMap((l) => [...nouns(l)]))

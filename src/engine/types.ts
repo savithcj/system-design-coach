@@ -49,6 +49,8 @@ export interface EngineProblem {
 
 export interface Rule {
   id: string
+  /** Plain-language name for the report. */
+  title: string
   stage: 1 | 2 | 3 | 4 | 5
   severity: Severity
   /** Which kind of coach move a violation of this rule usually calls for. */

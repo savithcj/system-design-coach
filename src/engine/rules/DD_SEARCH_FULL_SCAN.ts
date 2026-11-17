@@ -7,7 +7,7 @@ import { hasSearchIndex } from './search'
 const SEARCH = ['search*']
 
 export const rule: Rule = {
-  id: 'DD_SEARCH_FULL_SCAN', stage: 5, severity: 'warn', move: 'probe_bottleneck', minLevel: 'mid', needsChallenge: true,
+  id: 'DD_SEARCH_FULL_SCAN', title: 'Search answered by scanning the main database', stage: 5, severity: 'warn', move: 'probe_bottleneck', minLevel: 'mid', needsChallenge: true,
   applies: (s) => s.nodes.some((n) => n.role === 'db') && !hasSearchIndex(s),
   check(s) {
     const dbs = matchingNodes(s, (t, n) => n.role === 'db' && has(t, SEARCH))
