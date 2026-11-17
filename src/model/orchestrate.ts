@@ -3,7 +3,8 @@ import type { State } from '../core/state'
 import { checkReply, MAX_CHARS, MAX_CHARS_L3 } from '../engine/grounding'
 import type { EngineProblem } from '../engine/types'
 import { REPLY_SCHEMA, parseReply } from './prompt'
-import type { CoachModel, TurnRequest } from './types'
+import type { RawAction } from '../engine/chatEdit'
+import type { CoachModel, InterpretRequest, TurnRequest } from './types'
 
 /** A 3B model on an integrated GPU takes tens of seconds for a reply; 8 s timed out two calls in three in the first real run. */
 export const MODEL_TIMEOUT_MS = 30000
@@ -91,3 +92,9 @@ export async function phraseWithModel(model: CoachModel, req: TurnRequest, ctx: 
 }
 
 export { REPLY_SCHEMA }
+
+/** Ask the model what the learner's message asks to change. Never throws; a failure or a hang means no actions. */
+export async function interpretChat(model: CoachModel, req: InterpretRequest, ms: number): Promise<RawAction[]> {
+  if (model.status() !== 'ready' || !model.interpret) return []
+  try { return await withTimeout(model.interpret(req), ms) } catch { return [] }
+}

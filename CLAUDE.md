@@ -11,9 +11,9 @@ A coaching app for system design interviews. The learner builds an architecture 
 
 ## Hard rules
 1. The UI/UX is already designed. `reference/poc/index.html` is the source of truth. Match it. No new buttons, toolbars, popups or instructional text beyond what docs/02 lists.
-2. Code owns facts; the model owns wording. The model never decides correctness, never edits the board, never sees the hidden answer.
+2. Code owns facts; the model owns wording. The model never decides correctness and never sees the hidden answer. The model may change the board only by proposing actions from the learner's own chat message, from a closed vocabulary (write bullets into a notes box, add a component, connect two, add a floating note). Code validates every action (src/engine/chatEdit.ts): the words must be the learner's own, filler is refused, unknown boxes are refused. Applied changes are coach events tagged `via: chat:<seq>` and undo as one step per message. The model never adds its own design ideas to the board.
 3. Event sourcing: the append-only event log is the only source of truth. State is `reduce(events)`. Never mutate state outside events. Undo appends inverse events; it never deletes.
-4. No regex or word-list intent parsing of chat. Chat is "ask the coach" only.
+4. No regex or word-list intent parsing of chat. A model turns a chat message into proposed actions (never code reading the text); the only word list in the path is the filler list that makes code refuse answers like "idk".
 5. Accessibility is a requirement, not polish: every interaction works by keyboard, announces through the live region, has visible focus, supports dark mode and `prefers-reduced-motion`.
 6. Never leak the hidden answer to the learner or into model prompts (see docs/05 and docs/06).
 7. Fixtures are written in our own words. Do not store transcripts or text from third-party videos.

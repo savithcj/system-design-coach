@@ -59,6 +59,7 @@ export function narrate(log: EventLog): Step[] {
           item = { who: 'you', text: !e.payload.text.trim() ? `Removed the note on ${name}.` : was ? `Edited the note on ${name}.` : `Added a note to ${name}.` }
           break
         }
+        case 'ContractNoteUpdated': if ((e.payload as { via?: string }).via) item = { who: 'you', text: `The coach wrote under ${CONTRACT_TITLES[e.payload.block]} from your message.` }; break
         case 'StickyAdded': item = { who: 'you', text: `Added a floating note: ${quote(clipText(e.payload.text))}.` }; break
         case 'StickyEdited': item = { who: 'you', text: `Edited a floating note: ${quote(clipText(e.payload.text))}.` }; break
         case 'StickyDeleted': item = { who: 'you', text: `Removed the floating note ${quote(clipText(before.stickies.find((x) => x.id === e.payload.id)?.text ?? ''))}.` }; break

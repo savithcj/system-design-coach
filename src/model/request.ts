@@ -4,11 +4,30 @@ import type { State } from '../core/state'
 import { nodeName } from '../core/state'
 import type { CoachMove } from '../engine/selector'
 import type { Violation } from '../engine/types'
-import type { TurnRequest } from './types'
+import type { InterpretRequest, TurnRequest } from './types'
 
 const MAX_COMPONENTS = 14, MAX_LINKS = 20, MAX_TURN_CHARS = 240
 
 const clip = (s: string): string => (s.length > MAX_TURN_CHARS ? s.slice(0, MAX_TURN_CHARS - 1) + '…' : s)
+
+/** The learner's notes boxes, clipped, empty ones left out. */
+export const boxesOf = (state: State): { block: string; text: string }[] =>
+  Object.entries(state.contract).filter(([, t]) => t.trim()).map(([block, t]) => ({ block, text: t.length > 300 ? `${t.slice(0, 299)}…` : t }))
+
+export function buildInterpretRequest(state: State, log: EventLog, learnerMessage: string, problemTitle: string): InterpretRequest {
+  const lastCoach = [...log].reverse().find((e) => e.type === 'CoachResponded')
+  return {
+    problem: { title: problemTitle },
+    stage: state.stage,
+    learnerMessage: clip(learnerMessage),
+    ...(lastCoach ? { lastCoachLine: clip(String((lastCoach.payload as { message?: string }).message ?? '')) } : {}),
+    board: {
+      components: state.nodes.slice(0, MAX_COMPONENTS).map((n) => ({ name: n.label, category: roleLabel(n.role) })),
+      links: state.edges.slice(0, MAX_LINKS).map((e): [string, string] => [nodeName(state, e.a), nodeName(state, e.b)]),
+    },
+    boxes: boxesOf(state),
+  }
+}
 
 export interface RequestInput {
   state: State
@@ -40,6 +59,7 @@ export function buildRequest(i: RequestInput): TurnRequest {
       components: state.nodes.slice(0, MAX_COMPONENTS).map((n) => ({ name: n.label, category: roleLabel(n.role) })),
       links: state.edges.slice(0, MAX_LINKS).map((e): [string, string] => [nodeName(state, e.a), nodeName(state, e.b)]),
       notes: state.stickies.slice(0, 6).map((x) => clip(x.text)),
+      boxes: boxesOf(state),
     },
     violation: i.violation ? { id: i.violation.ruleId, summary: i.violation.summary, subjects: i.violation.subjects } : undefined,
     seed: i.seed,

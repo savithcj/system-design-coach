@@ -133,3 +133,10 @@ The model is optional and off by default. The scripted coach is always what runs
 - "Ready to move on" and "looks covered" lines are shown exactly as scripted, not reworded.
 - Two model-independent checks before any model line is shown: it must not repeat a line the coach already said, and it must share at least one longer word with the scripted seed. A failure gets one stricter retry, then the scripted line. Found in real Chrome: the 3B model copied the previous coach line three times in a row.
 - When a stage is written down and the learner keeps chatting, the coach says how to move on ("Choose Entities at the top when you are ready") instead of asking a question chat cannot answer, and the line changes on each further ask (three variants) so it does not loop. Moving between stages stays the learner's click on the stage pill; chat is never read for intent.
+
+## Chat can change the board (owner decision)
+- The learner's chat message can now write bullets into a notes box, add a component, connect two components and add a floating note. A model (local WebLLM) proposes actions as JSON; `planChatEdits` validates each one before anything is applied: closed vocabulary, content must be the learner's own words (provenance check, plural/inflection tolerant), filler like "idk"/"yes" refused, unknown boxes or components refused, at most six actions per message, duplicates skipped. Nothing is parsed from the text by code.
+- Applied changes are `actor: coach` events with `via: chat:<seq>`; one Ctrl+Z undoes everything one message changed (new undo grouping). The coach says what it did ("Added “…” under Functional.") and then answers as before on the updated board. The first time also says how to undo.
+- Without the model (no WebGPU, failed load) chat cannot change the board; the scripted coach still works as before.
+- The model now also sees the text of the notes boxes. CLAUDE.md hard rules 2 and 4 were rewritten for this.
+- Not yet: renaming, deleting, moving, editing existing bullets by chat.

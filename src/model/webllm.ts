@@ -1,5 +1,5 @@
 import { LOCAL_MODEL_ID } from './config'
-import { REPLY_SCHEMA, parseReply, toMessages } from './prompt'
+import { INTERPRET_SCHEMA, REPLY_SCHEMA, interpretMessages, parseActions, parseReply, toMessages } from './prompt'
 import type { CoachModel, ModelStatus, TurnReply, TurnRequest } from './types'
 
 /** Minimal shape of the engine we use, so the heavy library is only ever imported lazily. */
@@ -31,6 +31,17 @@ export function webllmModel(modelId: string = LOCAL_MODEL_ID): CoachModel {
         // Workers and caches reject with non-Error values; keep their message so the status line can say why.
         throw e instanceof Error ? e : new Error(String((e as { message?: unknown } | null)?.message ?? e))
       }
+    },
+    async interpret(req) {
+      if (!engine) throw new Error('model not loaded')
+      const out = await engine.chat.completions.create({
+        messages: interpretMessages(req),
+        response_format: { type: 'json_object', schema: JSON.stringify(INTERPRET_SCHEMA) },
+        temperature: 0.1,
+        max_tokens: 220,
+        stream: false,
+      })
+      return parseActions(out.choices[0]?.message.content ?? '')
     },
     async phrase(req: TurnRequest, opts): Promise<TurnReply> {
       if (!engine) throw new Error('model not loaded')
