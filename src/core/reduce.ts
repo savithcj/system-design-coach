@@ -1,4 +1,5 @@
 import type { EventLog, KnownEvent } from './events'
+import { isLevel } from './level'
 import { emptyState, type State } from './state'
 import { undoView } from './undo'
 
@@ -54,6 +55,9 @@ export function reduce(log: EventLog): State {
       }
       case 'EdgeDeleted':
         s.edges = s.edges.filter((x) => x.id !== e.payload.id)
+        break
+      case 'LevelSet':
+        if (isLevel(e.payload.level)) s.level = e.payload.level
         break
       case 'StageChanged': {
         const n = Math.round(e.payload.stage)

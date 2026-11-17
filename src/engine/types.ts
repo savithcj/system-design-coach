@@ -1,7 +1,8 @@
 import type { Role } from '../core/roles'
 import type { State } from '../core/state'
 
-export type Level = 'mid' | 'senior' | 'staff'
+import type { Level } from '../core/level'
+export type { Level }
 export const LEVEL_RANK: Readonly<Record<Level, number>> = { mid: 0, senior: 1, staff: 2 }
 export type Lens = 'default' | 'startup_mvp' | 'global_scale'
 export type Severity = 'info' | 'warn' | 'block'

@@ -1,4 +1,5 @@
 import type { ContractBlock, Port } from './events'
+import type { Level } from './level'
 import type { Role } from './roles'
 
 export interface NodeState {
@@ -26,6 +27,7 @@ export interface State {
   problemId: string | null
   /** 1..5, see stages.ts */
   stage: number
+  level: Level
   contract: Contract
   nodes: NodeState[]
   edges: EdgeState[]
@@ -34,7 +36,7 @@ export interface State {
 
 export const emptyContract = (): Contract => ({ functional: '', nonfunctional: '', entities: '', api: '' })
 
-export const emptyState = (): State => ({ problemId: null, stage: 1, contract: emptyContract(), nodes: [], edges: [], finished: false })
+export const emptyState = (): State => ({ problemId: null, stage: 1, level: 'mid', contract: emptyContract(), nodes: [], edges: [], finished: false })
 
 export function nodeName(s: State, id: string): string {
   return s.nodes.find((n) => n.id === id)?.label ?? '?'

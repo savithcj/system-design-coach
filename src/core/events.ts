@@ -1,3 +1,4 @@
+import type { Level } from './level'
 import type { Role } from './roles'
 
 export type Actor = 'user' | 'coach' | 'system'
@@ -17,6 +18,8 @@ export interface PayloadMap {
   LayoutReset: { pos: Record<string, { fx: number; y: number }> }
   /** The stage the learner (or, later, the coach) is working in: 1 Requirements .. 5 Deep dives. */
   StageChanged: { stage: number }
+  /** The learner chose how hard the coach should push. Not board-undoable. */
+  LevelSet: { level: Level }
   /** Full text of one contract block after an edit (debounced while typing, flushed on blur). Not board-undoable. */
   ContractNoteUpdated: { block: ContractBlock; text: string }
   EdgeLabeled: { id: string; label: string }
@@ -25,7 +28,7 @@ export interface PayloadMap {
   UserActionUndone: { targetSeq: number }
   UserActionRedone: { targetSeq: number }
   UserMessaged: { text: string }
-  CoachResponded: { kind: 'opening' | 'reply' | 'hint' | 'ack'; message: string; level?: number; ruleId?: string; move?: string }
+  CoachResponded: { kind: 'opening' | 'reply' | 'hint' | 'ack'; message: string; level?: number; ruleId?: string; move?: string; stage?: number }
   /** "Stuck?" was pressed; level is the hint level served (1..3). ruleId is absent when nothing was flagged. */
   HintRequested: { level: number; ruleId?: string }
   /** System: a rule's check started failing. Emitted only when the set of failing rules changes. */

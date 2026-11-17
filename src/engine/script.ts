@@ -21,7 +21,7 @@ const AFFIRM: Record<number, string> = {
 }
 
 /** The text a learner reads for a move. `violation` is the one the move is about, if any. */
-export function scriptedText(move: CoachMove, violation: Violation | undefined, stage: number): string {
+export function scriptedText(move: CoachMove, violation: Violation | undefined, stage: number, nudge?: string | null): string {
   const rule = move.ruleId ? ruleById(move.ruleId) : undefined
   if (rule && violation) {
     if (move.level === 1) return rule.hints.l1
@@ -29,5 +29,5 @@ export function scriptedText(move: CoachMove, violation: Violation | undefined, 
   }
   if (move.kind === 'affirm_and_advance') return AFFIRM[stage] ?? AFFIRM[5]!
   if (move.kind === 'stay_quiet') return ''
-  return NUDGE[stage] ?? `You are in ${STAGES[stage - 1]?.label ?? 'this stage'}. What would you do next?`
+  return nudge ?? NUDGE[stage] ?? `You are in ${STAGES[stage - 1]?.label ?? 'this stage'}. What would you do next?`
 }

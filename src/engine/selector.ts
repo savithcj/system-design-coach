@@ -22,6 +22,8 @@ export interface SelectInput {
   asked: boolean
   /** The learner has put something into the current stage. */
   hasContent: boolean
+  /** Highest hint level this request may serve. Chat is capped at 2: only "Stuck?" can reach the approach. */
+  maxLevel?: 1 | 2 | 3
 }
 
 const SEVERITY = { block: 0, warn: 1, info: 2 } as const
@@ -49,7 +51,7 @@ export function selectMove(i: SelectInput): CoachMove {
   }
 
   const seen = i.history.spoken[pick.ruleId]
-  if (i.asked) return move('offer_hint', pick.ruleId, Math.min(3, (seen?.level ?? 0) + 1) as 1 | 2 | 3)
+  if (i.asked) return move('offer_hint', pick.ruleId, Math.min(i.maxLevel ?? 3, (seen?.level ?? 0) + 1) as 1 | 2 | 3)
   // Unprompted: a repeat from an earlier stage is raised one level narrower, otherwise start (or stay) where we were.
   const level = seen && seen.lastStage < i.stage ? Math.min(2, seen.level + 1) : Math.max(1, Math.min(2, seen?.level ?? 1))
   return move(ruleById(pick.ruleId)!.move, pick.ruleId, level as 1 | 2 | 3)

@@ -62,6 +62,7 @@ export function narrate(log: EventLog): Step[] {
           break
         }
         case 'StageChanged': item = { who: 'you', text: `Moved to stage ${e.payload.stage}: ${STAGES[Math.round(e.payload.stage) - 1]?.label ?? ''}.` }; break
+        case 'LevelSet': item = { who: 'you', text: `Set the coach level to ${e.payload.level}.` }; break
         case 'UserMessaged': item = { who: 'you', text: `"${e.payload.text}"`, raw: e.payload.text, chat: true }; break
         case 'CoachResponded': item = { who: 'coach', text: e.payload.message, chat: true }; break
         case 'SessionFinished': item = { who: 'sys', text: 'Session finished.' }; break
