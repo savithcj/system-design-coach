@@ -125,3 +125,13 @@ describe('level', () => {
     expect(said(turn(b, { kind: 'stuck' }))[0]).toMatch(/goes down/)
   })
 })
+
+describe('asking again with nothing changed', () => {
+  it('does not repeat the same clarifying line', () => {
+    const b = board()
+    const first = said(turn(b, { kind: 'chat' }, url))
+    const second = said(turn(b, { kind: 'chat' }, url))
+    expect(first).toHaveLength(1)
+    expect(second[0]).not.toBe(first[0])
+  })
+})

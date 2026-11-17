@@ -6,8 +6,8 @@
 export const LOCAL_MODEL_ID = 'Llama-3.2-3B-Instruct-q4f16_1-MLC'
 
 /**
- * Whether a production build loads the local model without being asked. docs/08 requires 0% spoiler leaks and 0% ghost
- * components from the eval page before this is turned on, so it stays off until that has been run on a real model.
- * `?coach=local` turns it on for one visit; `?coach=scripted` forces it off.
+ * Whether the app loads the local model without being asked (needs WebGPU). On: the model is the coach's voice. The scripted
+ * wording stays as the fallback seed, so a failed or missing model never leaves the learner without a coach.
+ * `?coach=scripted` forces it off; automated browsers (navigator.webdriver) never download it.
  */
-export const LOCAL_MODEL_DEFAULT_ON = false
+export const LOCAL_MODEL_DEFAULT_ON = true

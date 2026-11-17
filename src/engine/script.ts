@@ -20,6 +20,10 @@ const AFFIRM: Record<number, string> = {
   5: 'Nothing obvious stands out here. How would you check that it holds up?',
 }
 
+/** Said instead of the nudge when the learner asks again and nothing on the board has answered it. */
+const POINT_TO_NOTES = 'I read what is on the board, not what is typed here. Where in the notes for this stage could you put your answer?'
+export { POINT_TO_NOTES }
+
 /** The text a learner reads for a move. `violation` is the one the move is about, if any. */
 export function scriptedText(move: CoachMove, violation: Violation | undefined, stage: number, nudge?: string | null): string {
   const rule = move.ruleId ? ruleById(move.ruleId) : undefined

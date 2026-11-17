@@ -28,7 +28,8 @@ export function webllmModel(modelId: string = LOCAL_MODEL_ID): CoachModel {
         st = 'ready'
       } catch (e) {
         st = 'error'
-        throw e
+        // Workers and caches reject with non-Error values; keep their message so the status line can say why.
+        throw e instanceof Error ? e : new Error(String((e as { message?: unknown } | null)?.message ?? e))
       }
     },
     async phrase(req: TurnRequest, opts): Promise<TurnReply> {

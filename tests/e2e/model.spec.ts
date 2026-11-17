@@ -15,7 +15,7 @@ const tooMany = async (page: any) => {
 }
 const coach = async (page: any) => (await events(page)).filter((e) => e.type === 'CoachResponded' && e.payload.kind !== 'opening')
 
-test('by default the scripted coach is shown and used', async ({ page }) => {
+test('under automation the default is the scripted coach (no multi-GB download in tests)', async ({ page }) => {
   await page.goto('/')
   await expect(status(page)).toHaveText('Coach ready (scripted)')
   await expect(page.locator('#coachStatus')).toHaveAttribute('data-dot', 'ready')
@@ -84,4 +84,23 @@ test('a model that fails to load leaves the scripted coach running and says so o
 test('?coach=scripted never loads anything', async ({ page }) => {
   await page.goto('/?coach=scripted')
   await expect(status(page)).toHaveText('Coach ready (scripted)')
+})
+
+test('while the model loads the app is covered, dimmed and cannot be used; it comes back when ready', async ({ page }) => {
+  await page.goto('/?coach=fake-good&coachLoadMs=1500')
+  const veil = page.locator('#veil')
+  await expect(veil).toBeVisible()
+  await expect(page.locator('#veilText')).toHaveText(/Loading coach \d+%/)
+  await expect(page.locator('#appRoot')).toHaveAttribute('inert', '')
+  await expect(veil).toBeHidden()
+  await expect(page.locator('#appRoot')).not.toHaveAttribute('inert', '')
+  await expect(status(page)).toHaveText('Coach ready (local model)')
+  await page.screenshot({ path: 'test-results/after-load.png' })
+})
+
+test('a failed load removes the cover and leaves the scripted coach', async ({ page }) => {
+  await page.goto('/?coach=local&model=not-a-real-model')
+  await expect(page.locator('#veil')).toBeHidden({ timeout: 20000 })
+  await expect(page.locator('#appRoot')).not.toHaveAttribute('inert', '')
+  await expect(status(page)).toHaveText(/scripted/)
 })

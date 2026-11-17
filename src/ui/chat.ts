@@ -5,6 +5,18 @@ import { $, say } from './dom'
 import { coachTurn } from './coach'
 import { dispatch, getLog, sessionToken } from './store'
 
+/** Covers and disables the whole app while the model first loads. The live region says it once, not per percent. */
+let veilShown = false
+function setVeil(v: { blocking?: boolean; text: string }): void {
+  const on = v.blocking === true
+  $('veilText').textContent = v.text
+  if (on === veilShown) return
+  veilShown = on
+  $('veil').hidden = !on
+  $('appRoot').toggleAttribute('inert', on)
+  if (on) $('veil').setAttribute('aria-label', 'Loading coach')
+}
+
 let rendered = 0
 let renderedFor = -1
 
@@ -26,6 +38,7 @@ export function renderChat(): void {
 export function initChat(): void {
   let first = true
   onStatus((v) => {
+    setVeil(v)
     $('coachStatus').dataset['dot'] = v.dot
     $('coachStatusText').textContent = v.text
     // Percent updates stay silent; the outcome is announced once.

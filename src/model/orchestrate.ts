@@ -5,7 +5,8 @@ import type { EngineProblem } from '../engine/types'
 import { REPLY_SCHEMA, parseReply } from './prompt'
 import type { CoachModel, TurnRequest } from './types'
 
-export const MODEL_TIMEOUT_MS = 8000
+/** A 3B model on an integrated GPU takes tens of seconds for a reply; 8 s timed out two calls in three in the first real run. */
+export const MODEL_TIMEOUT_MS = 30000
 
 /** Dev only: ?coachTimeout=600 shortens the wait so a hung model can be tested quickly. */
 export const timeoutMs = (): number => (import.meta.env.DEV ? Number(new URLSearchParams(location.search).get('coachTimeout')) || MODEL_TIMEOUT_MS : MODEL_TIMEOUT_MS)

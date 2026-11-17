@@ -120,15 +120,17 @@ describe('phrasing with a model, behind the gate', () => {
 })
 
 describe('which model is used', () => {
-  it('scripted by default everywhere until the eval page has passed', () => {
-    expect(chooseModel('', false, true)).toEqual({ kind: 'scripted' })
-    expect(chooseModel('', true, true)).toEqual({ kind: 'scripted' })
+  it('the local model is the default where WebGPU exists, except with no GPU, under automation or when forced off', () => {
+    expect(chooseModel('', false, true)).toMatchObject({ kind: 'local' })
+    expect(chooseModel('', true, true)).toMatchObject({ kind: 'local' })
+    expect(chooseModel('', false, false)).toEqual({ kind: 'scripted' })
+    expect(chooseModel('', false, true, true)).toEqual({ kind: 'scripted' })
   })
   it('?coach=local opts in; ?coach=scripted always wins; fakes and a model override are dev-only', () => {
     expect(chooseModel('?coach=local', false, true)).toMatchObject({ kind: 'local' })
     expect(chooseModel('?coach=scripted', true, true)).toEqual({ kind: 'scripted' })
     expect(chooseModel('?coach=fake-ghost', true, true)).toEqual({ kind: 'fake', mode: 'ghost' })
-    expect(chooseModel('?coach=fake-ghost', false, true)).toEqual({ kind: 'scripted' })
+    expect(chooseModel('?coach=fake-ghost', false, true)).toMatchObject({ kind: 'local' }) // fakes are ignored in production
     expect(chooseModel('?coach=local&model=X', true, true)).toEqual({ kind: 'local', modelId: 'X' })
     expect(chooseModel('?coach=local&model=X', false, true)).toMatchObject({ modelId: expect.not.stringMatching(/^X$/) })
   })

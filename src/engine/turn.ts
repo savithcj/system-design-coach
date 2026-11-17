@@ -9,7 +9,7 @@ import { checkReply, MAX_CHARS_L3 } from './grounding'
 import { historyOf, stageHasContent } from './history'
 import { nextNudge } from './nudge'
 import { ruleById } from './rules/registry'
-import { scriptedText } from './script'
+import { POINT_TO_NOTES, scriptedText } from './script'
 import { selectMove, type CoachMove } from './selector'
 
 export type Trigger =
@@ -29,6 +29,14 @@ function pendingConfirm(log: EventLog): string | null {
   if (last?.type !== 'CoachResponded') return null
   const p = last.payload as PayloadMap['CoachResponded']
   return p.move === 'confirm_hint' && p.ruleId ? p.ruleId : null
+}
+
+function lastCoachText(log: EventLog): string | null {
+  for (let i = log.length - 1; i >= 0; i--) {
+    const e = log[i]!
+    if (e.type === 'CoachResponded') return (e.payload as PayloadMap['CoachResponded']).message
+  }
+  return null
 }
 
 /** A coach line a model may reword. The scripted `seed` is already in the planned event and stays if the model fails. */
@@ -80,6 +88,8 @@ export function planTurnFull(log: EventLog, problem: Problem, trigger: Trigger):
 
   const nudge = !rule && move.kind === 'ask_clarifying' && stage >= 4 ? nextNudge(problem, state) : null
   let message = scriptedText(move, violation, stage, nudge)
+  // Asking again without changing the board must not get the same line back.
+  if (!rule && trigger.kind !== 'stage' && message === lastCoachText(log)) message = POINT_TO_NOTES
   const gate = checkReply({ message, state, problem, stage, ruleSpoilers: rule?.spoilers, allowRuleSpoilers: move.level === 3, maxChars: MAX_CHARS_L3 })
   if (gate.ok) job = { index: -1, move, violation, stage, seed: message, ruleSpoilers: rule?.spoilers, allowRuleSpoilers: move.level === 3 }
   else {
