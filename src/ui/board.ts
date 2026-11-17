@@ -187,7 +187,8 @@ function notesMarkup(): string {
 function nodeDesc(s: State, n: NodeState): string {
   const outs = s.edges.filter((e) => e.a === n.id).map((e) => nodeName(s, e.b))
   const ins = s.edges.filter((e) => e.b === n.id).map((e) => nodeName(s, e.a))
-  let desc = `${n.label}, ${roleLabel(n.role)}. ${outs.length ? `Sends to ${outs.join(', ')}. ` : ''}${ins.length ? `Receives from ${ins.join(', ')}. ` : ''}${!outs.length && !ins.length ? 'Not connected. ' : ''}${n.note ? 'Has a note. ' : ''}`
+  // Category first, as it is drawn: the visible text is "Client Phone", and the name must contain what is visible (WCAG 2.5.3).
+  let desc = `${roleLabel(n.role)} ${n.label}. ${outs.length ? `Sends to ${outs.join(', ')}. ` : ''}${ins.length ? `Receives from ${ins.join(', ')}. ` : ''}${!outs.length && !ins.length ? 'Not connected. ' : ''}${n.note ? 'Has a note. ' : ''}`
   if (ui.connectFrom && ui.connectFrom !== n.id) desc += `Press to draw an arrow from ${nodeName(s, ui.connectFrom)} to this.`
   else if (ui.connectFrom === n.id) desc += 'Connecting from here. Press to cancel.'
   return desc
@@ -233,7 +234,7 @@ export function renderBoard(s: State): void {
       const ny = p.y + (n.role === 'db' ? 29 : 25)
       ov += `<input id="nameInp" class="nodeName" type="text" aria-label="Name" data-for="${n.id}" value="${esc(n.label)}" style="left:${p.x + 20}px;top:${ny}px;width:${Math.max(40, L.nw - 40)}px">`
     }
-    btns += `<button class="${cls}" data-node="${n.id}" aria-pressed="${ui.sel === n.id}" aria-describedby="moveHelp" aria-keyshortcuts="Enter F2 Delete C N E Control+C Control+V Control+Z" aria-label="${esc(nodeDesc(s, n))}" data-role="${n.role}" style="left:${p.x}px;top:${p.y}px;width:${L.nw}px;height:${NH}px">${shapeSvg(n.role, L.nw, NH)}<small>${esc(roleLabel(n.role))}</small><span>${esc(n.label)}</span></button>${ov}`
+    btns += `<button class="${cls}" data-node="${n.id}" aria-pressed="${ui.sel === n.id}" aria-describedby="moveHelp" aria-keyshortcuts="Enter F2 Delete C N E Control+C Control+V Control+Z" aria-label="${esc(nodeDesc(s, n))}" data-role="${n.role}" style="left:${p.x}px;top:${p.y}px;width:${L.nw}px;height:${NH}px">${shapeSvg(n.role, L.nw, NH)}<small>${esc(roleLabel(n.role))} </small><span>${esc(n.label)}</span></button>${ov}`
   }
   let edgeInput = ''
   const editedEdge = ui.editingEdge ? s.edges.find((x) => x.id === ui.editingEdge) : undefined
@@ -504,7 +505,7 @@ export function initBoard(): void {
     if (n && save && v && v !== n.label) {
       record('NodeRenamed', { id, label: v })
       const sp = btn?.querySelector('span')
-      if (btn && sp) { sp.textContent = v; btn.setAttribute('aria-label', v + (btn.getAttribute('aria-label') ?? '').slice(n.label.length)) }
+      if (btn && sp) { sp.textContent = v; const now = getState().nodes.find((x) => x.id === id); if (now) btn.setAttribute('aria-label', nodeDesc(getState(), now)) }
       renderChat(); renderDetails(getState()); say(`Renamed to ${v}.`)
     }
     btn?.classList.remove('editing')
