@@ -1,4 +1,4 @@
-import { STICKY_H, STICKY_W, stickySlot } from '../core/layout'
+import { STICKY_W, stickySlot } from '../core/layout'
 import { escapeHtml as esc } from '../core/text'
 import type { State } from '../core/state'
 import { $, say } from './dom'
@@ -12,14 +12,17 @@ function boardW(): number { return Math.max(260, $('boardCol').clientWidth) }
 
 export function stickiesMarkup(s: State, W: number): string {
   const one = (x: { id: string; fx: number; y: number; text: string }) => {
-    const style = `left:${px(x.fx, W)}px;top:${x.y}px;width:${STICKY_W}px;min-height:${STICKY_H}px`
+    const style = `left:${px(x.fx, W)}px;top:${x.y}px;width:${STICKY_W}px`
     if (ui.editingSticky === x.id) return `<textarea id="stickyInp" class="stickyEdit" data-for="${x.id}" aria-label="Floating note" style="${style}">${esc(x.text)}</textarea>`
     return `<button type="button" class="sticky" data-sticky="${x.id}" aria-keyshortcuts="Enter F2 Delete" aria-label="${esc(`Floating note: ${x.text}. Press Enter to edit, arrow keys to move, Delete to remove.`)}" style="${style}">${esc(x.text)}</button>`
   }
   const d = ui.draftSticky
-  const draft = d ? `<textarea id="stickyInp" class="stickyEdit" data-for="${d.id}" data-draft="1" aria-label="New floating note" style="left:${px(d.fx, W)}px;top:${d.y}px;width:${STICKY_W}px;min-height:${STICKY_H}px"></textarea>` : ''
+  const draft = d ? `<textarea id="stickyInp" class="stickyEdit" data-for="${d.id}" data-draft="1" aria-label="New floating note" style="left:${px(d.fx, W)}px;top:${d.y}px;width:${STICKY_W}px;height:28px"></textarea>` : ''
   return `<div id="stickies">${s.stickies.map(one).join('')}${draft}</div>`
 }
+
+/** The edit box grows with its text, like free text in a drawing tool. */
+export function fitSticky(ta: HTMLTextAreaElement): void { ta.style.height = 'auto'; ta.style.height = `${Math.max(28, ta.scrollHeight)}px` }
 
 export function startSticky(): void {
   const s = getState()
@@ -115,6 +118,7 @@ export function initStickies(): void {
     const step = e.shiftKey ? 48 : 16
     move(id, Math.max(0, Math.min(boardW() - STICKY_W, px(st.fx, boardW()) + dir[0] * step)), Math.max(0, st.y + dir[1] * step))
   })
+  bd.addEventListener('input', (e) => { const t = e.target as HTMLTextAreaElement; if (t.id === 'stickyInp') fitSticky(t) })
   bd.addEventListener('focusout', (e) => {
     const t = e.target as HTMLTextAreaElement
     if (t.id === 'stickyInp') finish(t, true, false)

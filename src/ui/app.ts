@@ -3,6 +3,7 @@ import { PROBLEMS, problemById } from '../problems'
 import { $, syncRove } from './dom'
 import { scheduleRuleSync } from './coach'
 import { initBoard, renderBoard } from './board'
+import { fitSticky } from './stickies'
 import { initContract, syncContract } from './contract'
 import { initStages, syncStages } from './stages'
 import { initChat, renderChat } from './chat'
@@ -39,7 +40,7 @@ function render(): void {
     if (f) {
       f.focus()
       if (pf === 'NAME' || pf === 'EDGENAME') (f as HTMLInputElement).select()
-      else if (pf === 'STICKYINP') (f as HTMLTextAreaElement).setSelectionRange((f as HTMLTextAreaElement).value.length, (f as HTMLTextAreaElement).value.length)
+      else if (pf === 'STICKYINP') { fitSticky(f as HTMLTextAreaElement); (f as HTMLTextAreaElement).setSelectionRange((f as HTMLTextAreaElement).value.length, (f as HTMLTextAreaElement).value.length) }
       else if (pf === 'NOTE') { const ta = f as HTMLTextAreaElement; ta.setSelectionRange(ta.value.length, ta.value.length) }
     }
     ui.pendingFocus = null
