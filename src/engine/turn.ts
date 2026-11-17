@@ -31,12 +31,19 @@ function pendingConfirm(log: EventLog): string | null {
   return p.move === 'confirm_hint' && p.ruleId ? p.ruleId : null
 }
 
-function lastCoachText(log: EventLog): string | null {
+/**
+ * True when the coach's last move was a plain clarifying question and nothing but chat has happened since. Read from the
+ * move recorded in the log, not from the text shown, because a model may have reworded that text.
+ */
+function repeatsClarifying(log: EventLog): boolean {
   for (let i = log.length - 1; i >= 0; i--) {
     const e = log[i]!
-    if (e.type === 'CoachResponded') return (e.payload as PayloadMap['CoachResponded']).message
+    if (e.type === 'UserMessaged' || e.type === 'RuleFired' || e.type === 'RuleResolved' || e.type === 'CoachReplyRejected') continue
+    if (e.type !== 'CoachResponded') return false
+    const p = e.payload as PayloadMap['CoachResponded']
+    return p.move === 'ask_clarifying' && !p.ruleId
   }
-  return null
+  return false
 }
 
 /** A coach line a model may reword. The scripted `seed` is already in the planned event and stays if the model fails. */
@@ -89,7 +96,7 @@ export function planTurnFull(log: EventLog, problem: Problem, trigger: Trigger):
   const nudge = !rule && move.kind === 'ask_clarifying' && stage >= 4 ? nextNudge(problem, state) : null
   let message = scriptedText(move, violation, stage, nudge)
   // Asking again without changing the board must not get the same line back.
-  if (!rule && trigger.kind !== 'stage' && message === lastCoachText(log)) message = POINT_TO_NOTES
+  if (!rule && move.kind === 'ask_clarifying' && trigger.kind !== 'stage' && repeatsClarifying(log)) message = POINT_TO_NOTES
   const gate = checkReply({ message, state, problem, stage, ruleSpoilers: rule?.spoilers, allowRuleSpoilers: move.level === 3, maxChars: MAX_CHARS_L3 })
   if (gate.ok) job = { index: -1, move, violation, stage, seed: message, ruleSpoilers: rule?.spoilers, allowRuleSpoilers: move.level === 3 }
   else {

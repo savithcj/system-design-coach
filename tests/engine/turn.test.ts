@@ -133,5 +133,9 @@ describe('asking again with nothing changed', () => {
     const second = said(turn(b, { kind: 'chat' }, url))
     expect(first).toHaveLength(1)
     expect(second[0]).not.toBe(first[0])
+    // Still true when a model reworded the first line: the check reads the recorded move, not the shown text.
+    const log = b.s.log.map((e) => (e.type === 'CoachResponded' ? { ...e, payload: { ...(e.payload as object), message: 'reworded' } } : e))
+    const again = planTurn(log as never, url, { kind: 'chat' }).find((p) => p.type === 'CoachResponded')!.payload as { message: string }
+    expect(again.message).toBe(second[0])
   })
 })
