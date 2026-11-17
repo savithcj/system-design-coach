@@ -25,7 +25,14 @@ export interface PayloadMap {
   UserActionUndone: { targetSeq: number }
   UserActionRedone: { targetSeq: number }
   UserMessaged: { text: string }
-  CoachResponded: { kind: 'opening' | 'reply' | 'hint' | 'ack'; message: string; level?: number; ruleId?: string }
+  CoachResponded: { kind: 'opening' | 'reply' | 'hint' | 'ack'; message: string; level?: number; ruleId?: string; move?: string }
+  /** "Stuck?" was pressed; level is the hint level served (1..3). ruleId is absent when nothing was flagged. */
+  HintRequested: { level: number; ruleId?: string }
+  /** System: a rule's check started failing. Emitted only when the set of failing rules changes. */
+  RuleFired: { ruleId: string; stage: number; evidence: string[] }
+  RuleResolved: { ruleId: string }
+  /** System: a phrased reply failed the grounding gate (used by evals and the report, never shown to the learner). */
+  CoachReplyRejected: { reason: string; move: string }
   SessionFinished: Record<string, never>
 }
 
