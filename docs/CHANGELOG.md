@@ -152,3 +152,6 @@ The model is optional and off by default. The scripted coach is always what runs
 - Progress is read from the log of what the learner has done, not from the board or the chat text, so steps can be done in any order, one action can finish several steps, and the undo step cannot take an earlier step back. A chat message or Stuck? with no progress gets "Still on step N of 7" plus that step's text.
 - Added at the owner's request; not in docs/02. Axe is clean in light and dark.
 - Found by driving the real model through the tutorial: it named a component after the problem, put a feature under Non-functional, and copied an example from the coach's own line. The interpret prompt now defines each box, says features are never components, and says to copy words only from the learner's message; the practice round also omits the coach's last line from that request.
+
+## Deploy
+- `.github/workflows/deploy.yml`: every push to `main` runs `npm ci`, `npm test`, `npm run build` and publishes `dist/` to GitHub Pages. One-time repo setting: Settings > Pages > Source: "GitHub Actions". The e2e suite is not run in CI (it needs real Chrome and a model-free browser setup); it stays a local check.
