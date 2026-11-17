@@ -100,6 +100,9 @@ main{display:flex;flex-direction:column;flex:1;min-height:0}
 .trace b{color:var(--ink);font-weight:500}
 .trace code{font:12px ui-monospace,Menlo,Consolas,monospace;background:var(--soft);padding:1px 5px;border-radius:5px;color:var(--ink)}
 .composer{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line)}
+.stuck{font:inherit;font-size:13px;font-weight:500;color:var(--muted);background:transparent;border:0;border-radius:8px;padding:0 10px;min-height:34px;cursor:pointer;white-space:nowrap}
+.stuck:hover{background:var(--soft);color:var(--ink)}
+@media (pointer:coarse){.stuck{min-height:44px}}
 .composer input{flex:1;min-width:0;font:inherit;font-size:14px;border:1px solid var(--line2);border-radius:10px;padding:9px 12px;background:var(--bg);color:var(--ink)}
 .send{width:40px;height:40px;border-radius:10px;border:0;background:var(--solid);color:var(--onsolid);cursor:pointer;display:grid;place-items:center;flex:none}
 .send:hover{opacity:.88}

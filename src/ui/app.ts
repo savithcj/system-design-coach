@@ -1,5 +1,6 @@
 import { PROBLEMS, problemById } from '../problems'
 import { $, syncRove } from './dom'
+import { scheduleRuleSync } from './coach'
 import { initBoard, renderBoard } from './board'
 import { initContract, syncContract } from './contract'
 import { initStages, syncStages } from './stages'
@@ -7,7 +8,7 @@ import { initChat, renderChat } from './chat'
 import { initDetails, renderDetails } from './details'
 import { initReport, renderReport } from './report'
 import { initResizer } from './resizer'
-import { getState, loadProblem, setRenderer, ui } from './store'
+import { getState, loadProblem, setRenderer, setUserEventHook, ui } from './store'
 import { initTopbar, syncSeg } from './topbar'
 
 function render(): void {
@@ -42,6 +43,7 @@ function render(): void {
 
 export function startApp(): void {
   setRenderer(render)
+  setUserEventHook(scheduleRuleSync)
   initTopbar(); initStages(); initContract(); initBoard(); initChat(); initDetails(); initReport(); initResizer()
   loadProblem(PROBLEMS[0]!.id)
 }

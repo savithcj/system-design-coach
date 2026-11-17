@@ -1,5 +1,6 @@
 import { PROBLEMS } from '../problems'
 import { $, rove, syncRove } from './dom'
+import { syncRulesNow } from './coach'
 import { openReport } from './report'
 import { currentProblemId, dispatch, getLog, loadProblem } from './store'
 
@@ -24,6 +25,7 @@ export function initTopbar(): void {
   rove(seg, '[role=radio]', true)
   rove($('toolbar'), '.btn', false)
   $('finishBtn').onclick = () => {
+    syncRulesNow() // so the log records which issues were still open at the end
     if (getLog()[getLog().length - 1]?.type !== 'SessionFinished') dispatch('SessionFinished', {})
     openReport()
   }

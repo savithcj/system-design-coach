@@ -1,4 +1,5 @@
 import { STAGES, formatClock, stageTimes } from '../core/stages'
+import { coachTurn } from './coach'
 import { $, rove, say } from './dom'
 import { dispatch, getLog, getState, openStageBlocks, render } from './store'
 
@@ -34,7 +35,11 @@ export function initStages(): void {
     const n = Number(b.dataset['stage'])
     openStageBlocks(n)
     if (n === getState().stage) render()
-    else dispatch('StageChanged', { stage: n })
+    else {
+      const from = getState().stage
+      dispatch('StageChanged', { stage: n })
+      coachTurn({ kind: 'stage', from, to: n })
+    }
     say(`Stage ${n}, ${STAGES[n - 1]!.label}.`)
   })
   // Arrow keys only move focus; Enter or Space chooses. Choosing is an event, so it should be deliberate.

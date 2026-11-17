@@ -42,6 +42,7 @@
         <form id="chatForm" class="composer">
           <label for="chatInp" class="sr">Message the coach</label>
           <input id="chatInp" type="text" placeholder="Message" autocomplete="off">
+          <button type="button" id="stuckBtn" class="stuck">Stuck?</button>
           <button type="submit" class="send" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
         </form>
       </aside>
@@ -62,6 +63,7 @@
   <pre id="mmSrc" tabindex="0"></pre>
   <h3>Event log</h3>
   <pre id="evLog" tabindex="0"></pre>
+  <div class="row"><label for="levelSel">Coach level</label><select id="levelSel"><option value="mid">Mid</option><option value="senior">Senior</option><option value="staff">Staff</option></select></div>
   <div class="row"><button id="copyEv" class="btn">Copy events as JSON</button><button id="restart" class="btn danger">Start over</button></div>
 </dialog>
 

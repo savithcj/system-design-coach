@@ -1,6 +1,7 @@
 import { chatFeed } from '../core/report'
 import { escapeHtml as esc } from '../core/text'
-import { $, say } from './dom'
+import { $ } from './dom'
+import { coachTurn } from './coach'
 import { dispatch, getLog, sessionToken } from './store'
 
 let rendered = 0
@@ -26,8 +27,9 @@ export function initChat(): void {
     e.preventDefault()
     const inp = $<HTMLInputElement>('chatInp')
     const text = inp.value.trim()
-    // Chat is "ask the coach" only: the message is recorded; the coach answers once the engine lands (Step 7).
-    if (text) { dispatch('UserMessaged', { text }); inp.value = ''; say('Message sent.') }
+    // Chat is "ask the coach" only: the text is never parsed for intent; the coach answers with its best move.
+    if (text) { dispatch('UserMessaged', { text }); inp.value = ''; coachTurn({ kind: 'chat' }) }
     inp.focus()
   })
+  $('stuckBtn').addEventListener('click', () => coachTurn({ kind: 'stuck' }))
 }

@@ -2,10 +2,12 @@ import { serializeLog } from '../core/events'
 import { boardMermaid } from '../core/mermaid'
 import type { State } from '../core/state'
 import { $, say } from './dom'
-import { getLog, loadProblem, currentProblemId } from './store'
+import { isLevel } from '../core/level'
+import { dispatch, getLog, loadProblem, currentProblemId } from './store'
 
 export function renderDetails(s: State): void {
   $('mmSrc').textContent = s.nodes.length ? boardMermaid(s) : '(empty board)'
+  $<HTMLSelectElement>('levelSel').value = s.level
   $('evLog').textContent = getLog().map((e) => JSON.stringify({ seq: e.seq, actor: e.actor, type: e.type, payload: e.payload })).join('\n')
 }
 
@@ -25,6 +27,10 @@ export function initDetails(): void {
   const close = () => { if (dlg.close) dlg.close(); else dlg.removeAttribute('open') }
   $('detailsBtn').onclick = () => { if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', '') }
   $('detClose').onclick = close
+  $<HTMLSelectElement>('levelSel').onchange = (e) => {
+    const level = (e.target as HTMLSelectElement).value
+    if (isLevel(level)) { dispatch('LevelSet', { level }); say(`Coach level ${level}.`) }
+  }
   $('copyEv').onclick = function () { copyText(serializeLog(getLog()), this as HTMLElement, null) }
   $('restart').onclick = () => { close(); const id = currentProblemId(); if (id) loadProblem(id, true) }
 }

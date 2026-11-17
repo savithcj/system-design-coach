@@ -29,7 +29,10 @@ let cache: { log: EventLog; state: State } | null = null
 let token = 0
 let renderer: () => void = () => {}
 
+let onUserEvent: () => void = () => {}
 export const setRenderer = (f: () => void): void => { renderer = f }
+/** Called after every learner event, including the ones that patch the DOM themselves instead of rendering. */
+export const setUserEventHook = (f: () => void): void => { onUserEvent = f }
 export const render = (): void => renderer()
 
 export const getLog = (): EventLog => log
@@ -47,6 +50,7 @@ export const seqNext = (): number => nextSeq(log)
 /** Append without re-rendering (the caller patches the DOM itself). */
 export function record<K extends KnownType>(type: K, payload: PayloadMap[K], actor: Actor = 'user'): void {
   log = append(log, type, payload, actor, Date.now())
+  if (actor === 'user') onUserEvent()
 }
 
 export function dispatch<K extends KnownType>(type: K, payload: PayloadMap[K], actor: Actor = 'user'): void {
