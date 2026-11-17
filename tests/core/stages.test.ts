@@ -10,7 +10,7 @@ describe('stage and contract state', () => {
   it('starts at stage 1 with empty notes, and follows StageChanged', () => {
     const s = new Session()
     expect(s.state.stage).toBe(1)
-    expect(s.state.contract).toEqual({ functional: '', nonfunctional: '', entities: '', api: '' })
+    expect(s.state.contract).toEqual({ functional: '', outofscope: '', nonfunctional: '', entities: '', api: '' })
     s.add('StageChanged', { stage: 4 })
     expect(s.state.stage).toBe(4)
   })
@@ -19,7 +19,7 @@ describe('stage and contract state', () => {
     s.add('StageChanged', { stage: 9 }); s.add('StageChanged', { stage: 0 }); s.add('StageChanged', { stage: 2.4 })
     expect(s.state.stage).toBe(2)
     s.add('ContractNoteUpdated', { block: 'nope' as never, text: 'x' })
-    expect(Object.keys(s.state.contract)).toHaveLength(4)
+    expect(Object.keys(s.state.contract)).toHaveLength(5)
   })
   it('keeps the exact text of the last update per block, including blank lines and the divider', () => {
     const s = new Session()
@@ -145,5 +145,14 @@ describe('bulleted notes', () => {
     expect(p.inScope).toEqual(['shorten a URL'])
     expect(p.outOfScope).toEqual(['analytics'])
     expect(p.hasDivider).toBe(true)
+  })
+})
+
+describe('Out of scope box', () => {
+  it('counts the same as the "---" divider, and both can be used', async () => {
+    const { scopeOf } = await import('../../src/engine/contract')
+    expect(scopeOf({ functional: 'a\nb', outofscope: '• refunds\n• admin' })).toMatchObject({ inScope: ['a', 'b'], outOfScope: ['refunds', 'admin'] })
+    expect(scopeOf({ functional: 'a\n---\nold way', outofscope: '' }).outOfScope).toEqual(['old way'])
+    expect(scopeOf({ functional: 'a', outofscope: '' }).outOfScope).toEqual([])
   })
 })

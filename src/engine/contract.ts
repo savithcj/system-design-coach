@@ -14,6 +14,17 @@ export interface ParsedBlock {
 const DIVIDER = /^-{3,}$/
 const BULLET = /^(?:[-*•]|\d+[.)])(?:\s+|$)/
 
+/**
+ * What is in and out of scope, from the Functional box and the Out of scope box. A "---" divider in the Functional box
+ * still counts (older sessions used it), so both ways are read.
+ */
+export function scopeOf(contract: { functional: string; outofscope: string }): ParsedBlock {
+  const f = parseBlock(contract.functional)
+  const o = parseBlock(contract.outofscope)
+  const outOfScope = [...f.outOfScope, ...o.inScope, ...o.outOfScope]
+  return { inScope: f.inScope, outOfScope, hasDivider: f.hasDivider || outOfScope.length > 0 }
+}
+
 export function parseBlock(text: string): ParsedBlock {
   const inScope: string[] = []
   const outOfScope: string[] = []

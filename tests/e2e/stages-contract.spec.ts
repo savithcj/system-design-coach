@@ -29,7 +29,7 @@ test.describe('stage pill', () => {
     await expect(head(page, 'nonfunctional')).toHaveAttribute('aria-expanded', 'true')
     await expect(head(page, 'entities')).toHaveAttribute('aria-expanded', 'false')
     await expect(head(page, 'api')).toHaveAttribute('aria-expanded', 'false')
-    await expect(page.locator('.cblock.zone')).toHaveCount(2)
+    await expect(page.locator('.cblock.zone')).toHaveCount(3)
     await expect(page.locator('#boardCol')).not.toHaveClass(/zone/)
   })
 
@@ -226,4 +226,16 @@ test('notes are bullets: focus starts one, Enter adds one, Backspace on an empty
   await other.focus(); await other.blur()
   expect((await events(page)).filter((e) => e.type === 'ContractNoteUpdated' && e.payload.block === 'nonfunctional')).toHaveLength(0)
   await page.screenshot({ path: 'test-results/bullets.png' })
+})
+
+test('there is a visible Out of scope box under Functional, and writing in it clears the coach flag', async ({ page }) => {
+  await page.goto('/?coach=scripted')
+  await expect(page.locator('.cblock').nth(1)).toContainText('Out of scope')
+  await note(page, 'functional').click(); await page.keyboard.type('shorten a URL')
+  await note(page, 'outofscope').click(); await page.keyboard.type('custom aliases')
+  await page.locator('body').click({ position: { x: 600, y: 600 } })
+  await page.waitForTimeout(1200)
+  const ev = await events(page)
+  expect(ev.some((e) => e.type === 'RuleFired' && e.payload.ruleId === 'REQ_NO_OUT_OF_SCOPE')).toBe(false)
+  await page.screenshot({ path: 'test-results/outofscope.png' })
 })

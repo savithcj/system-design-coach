@@ -17,7 +17,7 @@ export const ui = {
   connectPort: null as string | null,
   reportOpen: false,
   /** Which contract blocks are expanded. UI state, per session view; never an event. */
-  open: { functional: true, nonfunctional: true, entities: false, api: false } as Record<ContractBlock, boolean>,
+  open: { functional: true, outofscope: true, nonfunctional: true, entities: false, api: false } as Record<ContractBlock, boolean>,
   /** Element to focus after the next render: a node id, 'NAME' (the rename field) or 'ADD'. */
   pendingFocus: null as string | null,
 }

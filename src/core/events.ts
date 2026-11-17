@@ -3,7 +3,7 @@ import type { Role } from './roles'
 
 export type Actor = 'user' | 'coach' | 'system'
 export type Port = 't' | 'r' | 'b' | 'l'
-export type ContractBlock = 'functional' | 'nonfunctional' | 'entities' | 'api'
+export type ContractBlock = 'functional' | 'outofscope' | 'nonfunctional' | 'entities' | 'api'
 
 /** Payloads of the events this build knows. Milestone-1 events are added to this map as their steps land. */
 export interface PayloadMap {

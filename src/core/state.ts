@@ -34,7 +34,7 @@ export interface State {
   finished: boolean
 }
 
-export const emptyContract = (): Contract => ({ functional: '', nonfunctional: '', entities: '', api: '' })
+export const emptyContract = (): Contract => ({ functional: '', outofscope: '', nonfunctional: '', entities: '', api: '' })
 
 export const emptyState = (): State => ({ problemId: null, stage: 1, level: 'mid', contract: emptyContract(), nodes: [], edges: [], finished: false })
 

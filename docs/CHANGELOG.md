@@ -118,3 +118,6 @@ The model is optional and off by default. The scripted coach is always what runs
 - Chat stops at hint level 2; a further chat message on the same issue says how to go on instead of repeating level 2.
 - Real-Chrome run (Llama 3.2 3B, cached): chat replies come in about 5-10 s, stay on the open issue, name "Functional requirements", and Stuck? twice gives the concrete level-3 line.
 - Known: selecting all text in a note box and typing replaces the bullet too, so that first line has none (the parser does not need it).
+
+## Out of scope box
+- A visible "Out of scope" notes box sits under Functional (stage 1). The hidden "---" divider is still read for older sessions, but nothing tells the learner to use it any more; coach wording and hints point at the box. `scopeOf()` reads both. In the study guide the box's items join the Functional section's "Out of scope" list. Added at the owner's request; not in docs/02. The contract now has five blocks.

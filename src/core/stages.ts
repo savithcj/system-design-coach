@@ -10,7 +10,7 @@ export interface StageInfo {
 }
 
 export const STAGES: readonly StageInfo[] = [
-  { n: 1, label: 'Requirements', targetMin: 5, blocks: ['functional', 'nonfunctional'] },
+  { n: 1, label: 'Requirements', targetMin: 5, blocks: ['functional', 'outofscope', 'nonfunctional'] },
   { n: 2, label: 'Entities', targetMin: 2, blocks: ['entities'] },
   { n: 3, label: 'API', targetMin: 5, blocks: ['api'] },
   { n: 4, label: 'High-level design', targetMin: 12, blocks: [] },
@@ -19,12 +19,13 @@ export const STAGES: readonly StageInfo[] = [
 
 export const CONTRACT_TITLES: Readonly<Record<ContractBlock, string>> = {
   functional: 'Functional',
+  outofscope: 'Out of scope',
   nonfunctional: 'Non-functional',
   entities: 'Core entities',
   api: 'API / data flow',
 }
 
-export const CONTRACT_BLOCKS: readonly ContractBlock[] = ['functional', 'nonfunctional', 'entities', 'api']
+export const CONTRACT_BLOCKS: readonly ContractBlock[] = ['functional', 'outofscope', 'nonfunctional', 'entities', 'api']
 
 /**
  * Milliseconds spent in each stage (index 0 = stage 1), cumulative if the learner returns to a stage.

@@ -30,7 +30,7 @@ class Sess {
     this.add('EdgeAdded', { id, a, b })
     if (label) this.add('EdgeLabeled', { id, label })
   }
-  text(block: 'functional' | 'nonfunctional' | 'entities' | 'api', ...lines: string[]) { this.add('ContractNoteUpdated', { block, text: lines.join('\n') }) }
+  text(block: 'functional' | 'outofscope' | 'nonfunctional' | 'entities' | 'api', ...lines: string[]) { this.add('ContractNoteUpdated', { block, text: lines.join('\n') }) }
   stage(n: number) { this.add('StageChanged', { stage: n }) }
 }
 

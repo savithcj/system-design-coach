@@ -7,6 +7,7 @@ import { getState, record, ui } from './store'
 
 const LABELS: Readonly<Record<ContractBlock, string>> = {
   functional: 'Functional requirements',
+  outofscope: 'Out of scope',
   nonfunctional: 'Non-functional requirements',
   entities: 'Core entities',
   api: 'API and data flow',

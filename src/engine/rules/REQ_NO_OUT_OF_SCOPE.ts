@@ -1,19 +1,19 @@
-import { parseBlock } from '../contract'
+import { parseBlock, scopeOf } from '../contract'
 import type { Rule } from '../types'
 
 export const rule: Rule = {
   id: 'REQ_NO_OUT_OF_SCOPE', title: 'Nothing marked out of scope', stage: 1, severity: 'info', move: 'ask_clarifying', minLevel: 'mid',
   applies: (s) => parseBlock(s.contract.functional).inScope.length > 0,
   check(s) {
-    const p = parseBlock(s.contract.functional)
+    const p = scopeOf(s.contract)
     if (p.outOfScope.length > 0) return null
     return { evidence: [], subjects: [], summary: 'Nothing is listed as out of scope.' }
   },
   hints: {
-    l1: 'Is there anything an interviewer might expect that you are deliberately not building, and how would they know?',
-    l2: () => 'Saying what is out of scope is part of the answer. Where in your Functional requirements could you write that down?',
-    l3: () => 'Add a bullet that is just "---". Anything you list below it counts as out of scope, for example features that are real but not central.',
+    l1: 'Is there anything an interviewer might expect that you are deliberately not building? Add it under Out of scope.',
+    l2: () => 'Saying what is out of scope is part of the answer. Which of the things you can think of would you leave out? Add them under Out of scope.',
+    l3: () => 'Add what you are deliberately leaving out as bullets under Out of scope, for example features that are real but not central.',
   },
   spoilers: [],
-  resolvedBy: 'Adding a "---" line followed by what is deliberately left out.',
+  resolvedBy: 'Listing what is deliberately left out under Out of scope.',
 }

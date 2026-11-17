@@ -5,7 +5,7 @@ import { ruleById } from './rules/registry'
 import type { Violation } from './types'
 
 const NUDGE: Record<number, string> = {
-  1: 'What is the one thing a user must be able to do? Add it as a bullet under Functional requirements and say what you are leaving out.',
+  1: 'What is the one thing a user must be able to do? Add it as a bullet under Functional requirements, and list what you are leaving out under Out of scope.',
   2: 'Which things does the system keep track of? Add them as bullets under Core entities; names alone are enough for now.',
   3: 'Which calls would a client make? Add one bullet per call under API and data flow.',
   4: 'Pick one request and draw its route from the client to where its data lives.',

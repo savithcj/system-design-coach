@@ -5,7 +5,7 @@ import { nodeName } from './state'
 import { roleLabel } from './roles'
 import { escapeHtml as esc, texEscape as tex } from './text'
 import { CONTRACT_BLOCKS, CONTRACT_TITLES, STAGES, formatClock, stageBySeq, stageTimes } from './stages'
-import { parseBlock } from '../engine/contract'
+import { parseBlock, scopeOf } from '../engine/contract'
 import { ruleById } from '../engine/rules/registry'
 import { problemById } from '../problems'
 import { BASELINES } from '../problems/baselines'
@@ -180,8 +180,8 @@ export function buildReport(log: EventLog): ReportModel {
       n: g.n, label: g.label, targetMin: g.targetMin, spent: formatClock(spent[g.n - 1]!),
       stepIdx: steps.flatMap((st, i) => (stageOf.get(st.seq) === g.n ? [i] : [])),
     })),
-    contract: CONTRACT_BLOCKS.flatMap((id) => {
-      const p = parseBlock(s.contract[id])
+    contract: CONTRACT_BLOCKS.filter((id) => id !== 'outofscope').flatMap((id) => {
+      const p = id === 'functional' ? scopeOf(s.contract) : parseBlock(s.contract[id])
       return p.inScope.length || p.outOfScope.length ? [{ id, title: CONTRACT_TITLES[id], inScope: p.inScope, outOfScope: p.outOfScope }] : []
     }),
     flags: flagsOf(log),
