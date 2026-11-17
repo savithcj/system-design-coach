@@ -3,6 +3,7 @@
 import type { EventLog, KnownType, PayloadMap } from '../core/events'
 import { reduce } from '../core/reduce'
 import type { Problem } from '../problems/types'
+import type { Violation } from './types'
 import { evaluate } from './evaluate'
 import { checkReply, MAX_CHARS_L3 } from './grounding'
 import { historyOf, stageHasContent } from './history'
@@ -30,7 +31,24 @@ function pendingConfirm(log: EventLog): string | null {
   return p.move === 'confirm_hint' && p.ruleId ? p.ruleId : null
 }
 
-export function planTurn(log: EventLog, problem: Problem, trigger: Trigger): Planned[] {
+/** A coach line a model may reword. The scripted `seed` is already in the planned event and stays if the model fails. */
+export interface PhraseJob {
+  /** Index in `events` of the CoachResponded to reword. */
+  index: number
+  move: CoachMove
+  violation: Violation | undefined
+  stage: number
+  seed: string
+  ruleSpoilers: readonly string[] | undefined
+  /** True only for a confirmed level-3 hint. */
+  allowRuleSpoilers: boolean
+}
+
+export interface Plan { events: Planned[]; job?: PhraseJob }
+
+export const planTurn = (log: EventLog, problem: Problem, trigger: Trigger): Planned[] => planTurnFull(log, problem, trigger).events
+
+export function planTurnFull(log: EventLog, problem: Problem, trigger: Trigger): Plan {
   const state = reduce(log)
   const violations = evaluate(state, problem)
   const history = historyOf(log)
@@ -48,21 +66,23 @@ export function planTurn(log: EventLog, problem: Problem, trigger: Trigger): Pla
   } else {
     move = selectMove({ ...base, stage, asked: true, hasContent: stageHasContent(state, stage), maxLevel: trigger.kind === 'chat' ? 2 : 3 })
   }
-  if (move.kind === 'stay_quiet') return []
+  if (move.kind === 'stay_quiet') return { events: [] }
 
   const out: Planned[] = []
+  let job: PhraseJob | undefined
   const rule = move.ruleId ? ruleById(move.ruleId) : undefined
   const violation = violations.find((v) => v.ruleId === move.ruleId)
 
   // Level 3 gives the approach away, so ask first. The question is itself the "pending" marker in the log.
   if (move.needsConfirm && !pending) {
-    return [planned('CoachResponded', { kind: 'ack', message: CONFIRM_TEXT, ruleId: move.ruleId, level: 2, move: 'confirm_hint', stage }, 'coach')]
+    return { events: [planned('CoachResponded', { kind: 'ack', message: CONFIRM_TEXT, ruleId: move.ruleId, level: 2, move: 'confirm_hint', stage }, 'coach')] }
   }
 
   const nudge = !rule && move.kind === 'ask_clarifying' && stage >= 4 ? nextNudge(problem, state) : null
   let message = scriptedText(move, violation, stage, nudge)
   const gate = checkReply({ message, state, problem, stage, ruleSpoilers: rule?.spoilers, allowRuleSpoilers: move.level === 3, maxChars: MAX_CHARS_L3 })
-  if (!gate.ok) {
+  if (gate.ok) job = { index: -1, move, violation, stage, seed: message, ruleSpoilers: rule?.spoilers, allowRuleSpoilers: move.level === 3 }
+  else {
     // Never show a line the gate rejects (a learner's own wording can trip it); fall back to the rule's plain question.
     out.push(planned('CoachReplyRejected', { reason: gate.reasons.join(','), move: move.kind }, 'system'))
     message = rule ? rule.hints.l1 : scriptedText({ ...move, kind: 'ask_clarifying', ruleId: undefined }, undefined, stage)
@@ -71,5 +91,6 @@ export function planTurn(log: EventLog, problem: Problem, trigger: Trigger): Pla
   if (trigger.kind === 'stuck') out.push(planned('HintRequested', { level: move.level, ruleId: move.ruleId }, 'coach'))
   const kind = trigger.kind === 'stuck' ? 'hint' : move.kind === 'affirm_and_advance' ? 'ack' : 'reply'
   out.push(planned('CoachResponded', { kind, message, level: move.level, ruleId: move.ruleId, move: move.kind, stage }, 'coach'))
-  return out
+  if (job) job.index = out.length - 1
+  return { events: out, job }
 }
