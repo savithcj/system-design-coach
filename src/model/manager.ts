@@ -12,12 +12,16 @@ let active: CoachModel = scriptedModel
 let view: StatusView = { dot: 'ready', text: 'Coach ready (scripted)' }
 const listeners = new Set<(v: StatusView) => void>()
 
-/** Shown while a model is writing a reply; restores the previous status afterwards. */
-let before: StatusView | null = null
+/** True while a model is writing. The chat shows a bubble with moving dots; the status line is left alone. */
+let thinking = false
+const thinkListeners = new Set<(on: boolean) => void>()
 export function setThinking(on: boolean): void {
-  if (on && !before) { before = view; set({ dot: 'loading', text: 'Coach is thinking…' }) }
-  else if (!on && before) { const b = before; before = null; set(b) }
+  if (on === thinking) return
+  thinking = on
+  thinkListeners.forEach((f) => f(on))
 }
+export const isThinking = (): boolean => thinking
+export function onThinking(f: (on: boolean) => void): () => void { thinkListeners.add(f); return () => { thinkListeners.delete(f) } }
 
 export const currentModel = (): CoachModel => active
 export const statusView = (): StatusView => view

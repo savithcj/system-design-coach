@@ -60,15 +60,18 @@ test('a model that leaks a held-back term is rejected the same way', async ({ pa
   await expect(page.locator('#coach .msg.coach').last()).not.toContainText('waiting queue')
 })
 
-test('a model that never answers: the coach says "thinking", then carries on scripted, and extra presses do not pile up', async ({ page }) => {
-  await page.goto('/?coach=fake-hang&coachTimeout=600')
+test('a model that never answers: a bubble with moving dots shows, then carries on scripted, and extra presses do not pile up', async ({ page }) => {
+  await page.goto('/?coach=fake-hang&coachTimeout=1500')
   await expect(status(page)).toHaveText('Coach ready (local model)')
   await tooMany(page)
   await page.click('#stuckBtn')
-  await expect(status(page)).toHaveText('Coach is thinking…')
+  await expect(page.locator('#thinkBubble')).toBeVisible()
+  await expect(page.locator('#thinkBubble span')).toHaveCount(3)
+  await expect(status(page)).not.toHaveText('Coach is thinking…')
   await page.click('#stuckBtn'); await page.click('#stuckBtn') // ignored while it is writing
   await expect.poll(async () => (await coach(page)).length, { timeout: 4000 }).toBe(1)
   await expect(status(page)).toHaveText('Coach ready (local model)')
+  await expect(page.locator('#thinkBubble')).toHaveCount(0) // gone once the reply is in
   expect((await events(page)).filter((e) => e.type === 'CoachReplyRejected').map((e) => e.payload.reason)).toEqual(['model:timeout'])
 })
 

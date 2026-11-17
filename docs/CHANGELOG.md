@@ -142,3 +142,6 @@ The model is optional and off by default. The scripted coach is always what runs
 - Not yet: renaming, deleting, moving, editing existing bullets by chat.
 - Found by driving the real model in Chrome: a compound request ("add a web app and an api server and connect them") first produced one action; the prompt now says one action per separate thing, with a multi-action example. The model also gave "API server" the Database category; `roleFor` lets a component's own name (server, cache, queue, database, client words) settle its category. Rejected actions are logged as `CoachReplyRejected` (`chat-edit:<reasons>`), and in dev `window.__chatEdit` shows the last proposal.
 - Verified with Llama 3.2 3B: requirement sentence → two bullets under Functional; "idk" → nothing; compound request → Client + Server + arrow; one Cmd/Ctrl+Z reverts a whole message.
+
+## Thinking bubble
+- While a model is writing, the chat shows a coach-side bubble with three moving dots instead of changing the status text. It is hidden from assistive tech (the live region says "Coach is thinking." once), holds still under reduced motion, and stays up across the two model calls of one chat turn. Requested by the owner.
