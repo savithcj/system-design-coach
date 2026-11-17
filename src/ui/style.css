@@ -168,7 +168,7 @@ path[data-edge]:focus-visible{stroke:var(--accent);stroke-opacity:.22}
 .stages .sn{font-size:11px;opacity:.7}
 .stagetime{font-size:12px;font-weight:400;font-variant-numeric:tabular-nums;color:var(--muted)}
 @media (pointer:coarse){.stages button{min-height:40px}}
-@media (max-width:899px){.top .stages{order:6;width:100%}}
+@media (max-width:1299px){.top .stages{order:6;width:100%}}
 
 .canvas{display:flex;gap:16px;align-items:flex-start}
 #boardCol{flex:1;min-width:0;align-self:stretch;border:1px solid transparent;border-radius:10px}
