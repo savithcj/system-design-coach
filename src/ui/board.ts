@@ -1,7 +1,7 @@
 import { connectIntent, copyLabel, defaultLabel } from '../core/actions'
 import { NH, NORM, curveTo, edgeLabelPoint, edgePath, noteSide, portPt, snapPort, usedPorts, type Pt, type Snap } from '../core/geometry'
 import type { Port } from '../core/events'
-import { canvasHeight, freeSlot, resolvePositions, tidyPositions } from '../core/layout'
+import { canvasHeight, freeSlot, resolvePositions, stickiesBottom, tidyPositions } from '../core/layout'
 import { ROLES, roleLabel, type Role } from '../core/roles'
 import { emptyState, nodeName, type EdgeState, type NodeState, type State } from '../core/state'
 import { narrate } from '../core/report'
@@ -11,6 +11,7 @@ import { $, say } from './dom'
 import { dispatch, getLog, getState, record, render, resetSelection, seqNext, ui } from './store'
 import { shapeSvg } from './shapes'
 import { renderChat } from './chat'
+import { initStickies, stickiesMarkup } from './stickies'
 import { renderDetails } from './details'
 
 interface Cur { s: State; pos: Record<string, Pt>; nw: number; W: number; H: number }
@@ -114,7 +115,7 @@ function undoRedo(kind: 'undo' | 'redo'): void {
   const s = getState()
   // Undo can remove the selected box or arrow; never leave the UI pointing at something that is gone.
   if ((ui.sel && !s.nodes.some((n) => n.id === ui.sel)) || (ui.selEdge && !s.edges.some((e) => e.id === ui.selEdge))) resetSelection()
-  ui.editing = false; ui.editingEdge = null; ui.editingNote = null; ui.connectFrom = null
+  ui.editing = false; ui.editingEdge = null; ui.editingNote = null; ui.editingSticky = null; ui.draftSticky = null; ui.connectFrom = null
   ui.pendingFocus = ui.sel ?? 'ADD'
   render()
   const last = narrate(getLog()).at(-1)
@@ -219,9 +220,9 @@ export function renderBoard(s: State): void {
   const el = $('board')
   const W = boardWidth()
   cur = { s, pos: {}, nw: 0, W: 0, H: 0 }
-  if (!s.nodes.length) { el.style.width = 'auto'; el.style.height = 'auto'; el.innerHTML = ''; return }
+  if (!s.nodes.length && !s.stickies.length && !ui.draftSticky) { el.style.width = 'auto'; el.style.height = 'auto'; el.innerHTML = ''; return }
   const L = resolvePositions(s.nodes, W)
-  const H = canvasHeight(L.pos)
+  const H = Math.max(canvasHeight(L.pos), stickiesBottom(ui.draftSticky ? [...s.stickies, ui.draftSticky] : s.stickies) + 60)
   cur = { s, pos: L.pos, nw: L.nw, W: L.W, H }
   const marker = (id: string, fill: string) => `<marker id="${id}" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.5,1 L10,5 L0.5,9 z" fill="${fill}"/></marker>`
   const svg = `<svg id="edgeSvg" width="${L.W}" height="${H}" style="position:absolute;left:0;top:0;pointer-events:none" role="group" aria-label="Connections" focusable="false"><defs>${marker('ah', 'var(--edge)')}${marker('ahSel', 'var(--accent)')}</defs><g id="edgeLayer">${edgesMarkup()}</g></svg>`
@@ -244,7 +245,7 @@ export function renderBoard(s: State): void {
   }
   el.style.width = `${L.W}px`; el.style.height = `${H}px`
   const labelSvg = `<svg id="labelSvg" width="${L.W}" height="${H}" style="position:absolute;left:0;top:0;pointer-events:none" aria-hidden="true" focusable="false"><g id="labelLayer">${labelsMarkup()}</g></svg>`
-  el.innerHTML = svg + btns + labelSvg + `<div id="notes">${notesMarkup()}</div>` + edgeInput
+  el.innerHTML = svg + btns + labelSvg + `<div id="notes">${notesMarkup()}</div>` + stickiesMarkup(s, L.W) + edgeInput
 }
 
 /* ---------- component picker: type to filter, arrows to move, Enter to choose, Escape to close ---------- */
@@ -305,6 +306,7 @@ function initPicker(): void {
 
 export function initBoard(): void {
   initPicker()
+  initStickies()
   $('tidyBtn').onclick = tidy
 
   const bd = $('board')

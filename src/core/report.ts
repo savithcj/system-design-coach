@@ -21,6 +21,8 @@ export function elapsed(log: EventLog, ts: number): string {
 }
 
 /** The log as a human timeline. Events marked `silent` (inverse events appended by undo) are skipped. */
+const clipText = (t: string): string => { const one = t.replace(/\s+/g, ' ').trim(); return one.length > 60 ? `${one.slice(0, 59)}…` : one }
+
 export function narrate(log: EventLog): Step[] {
   const out: Step[] = []
   const texts = new Map<number, string>()
@@ -57,6 +59,9 @@ export function narrate(log: EventLog): Step[] {
           item = { who: 'you', text: !e.payload.text.trim() ? `Removed the note on ${name}.` : was ? `Edited the note on ${name}.` : `Added a note to ${name}.` }
           break
         }
+        case 'StickyAdded': item = { who: 'you', text: `Added a floating note: ${quote(clipText(e.payload.text))}.` }; break
+        case 'StickyEdited': item = { who: 'you', text: `Edited a floating note: ${quote(clipText(e.payload.text))}.` }; break
+        case 'StickyDeleted': item = { who: 'you', text: `Removed the floating note ${quote(clipText(before.stickies.find((x) => x.id === e.payload.id)?.text ?? ''))}.` }; break
         case 'UserActionUndone':
         case 'UserActionRedone': {
           const t = texts.get(e.payload.targetSeq)
@@ -121,6 +126,8 @@ export interface ReportModel {
   times: string[]
   stages: StageSection[]
   contract: ContractSection[]
+  /** Floating notes on the final board. */
+  notes: string[]
   flags: FlagSection[]
   reference?: ReferenceSection
   finalMermaid: string
@@ -184,6 +191,7 @@ export function buildReport(log: EventLog): ReportModel {
       const p = id === 'functional' ? scopeOf(s.contract) : parseBlock(s.contract[id])
       return p.inScope.length || p.outOfScope.length ? [{ id, title: CONTRACT_TITLES[id], inScope: p.inScope, outOfScope: p.outOfScope }] : []
     }),
+    notes: s.stickies.map((x) => x.text),
     flags: flagsOf(log),
     ...(s.finished ? { reference: referenceOf(s) } : {}),
     finalMermaid: boardMermaid(s),
@@ -221,6 +229,7 @@ export function renderHtml(r: ReportModel): string {
       if (c.outOfScope.length) h += `<div ${muted}>Out of scope</div><ul>${c.outOfScope.map((l) => `<li>${esc(l)}</li>`).join('')}</ul>`
     }
   }
+  if (r.notes.length) h += `<h2>Floating notes</h2><ul>${r.notes.map((l) => `<li>${esc(l).replace(/\n/g, '<br>')}</li>`).join('')}</ul>`
   if (r.flags.length) {
     h += '<h2>What the coach flagged</h2><ul>'
     for (const f of r.flags) {
@@ -269,6 +278,7 @@ export function renderLatex(r: ReportModel): string {
     }
     L.push('')
   }
+  if (r.notes.length) L.push('\\section{Floating notes}', '\\begin{itemize}', ...r.notes.map((l) => `  \\item ${tex(l.replace(/\s+/g, ' '))}`), '\\end{itemize}', '')
   if (r.flags.length) {
     L.push('\\section{What the coach flagged}', '\\begin{itemize}')
     for (const f of r.flags) {

@@ -13,6 +13,9 @@ export const ui = {
   /** Edge whose label field is open, or box whose note field is open. */
   editingEdge: null as string | null,
   editingNote: null as string | null,
+  /** A floating note being typed for the first time (not an event until it has text), and an existing one being edited. */
+  draftSticky: null as { id: string; fx: number; y: number } | null,
+  editingSticky: null as string | null,
   connectFrom: null as string | null,
   connectPort: null as string | null,
   reportOpen: false,

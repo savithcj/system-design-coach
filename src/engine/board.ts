@@ -18,6 +18,7 @@ export function allText(s: State): string {
     ...Object.values(s.contract),
     ...s.nodes.map(nodeText),
     ...s.edges.map((e) => e.label ?? ''),
+    ...s.stickies.map((x) => x.text),
   ].join('\n')
 }
 

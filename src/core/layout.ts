@@ -126,3 +126,28 @@ export function canvasHeight(pos: Readonly<Record<string, Pt>>): number {
   for (const id of Object.keys(pos)) m = Math.max(m, pos[id]!.y + NH)
   return Math.max(300, m + 60)
 }
+
+/** Width of a floating note, and the room one is assumed to need when finding it a spot. */
+export const STICKY_W = 170
+export const STICKY_H = 84
+
+/** Position (fraction of the free width, and pixels down) for a new floating note: the first spot clear of boxes and other notes. */
+export function stickySlot(nodes: readonly NodeState[], stickies: readonly { fx: number; y: number }[], W: number): { fx: number; y: number } {
+  const { pos, nw } = resolvePositions(nodes, W)
+  const free = Math.max(1, W - STICKY_W)
+  const taken = [
+    ...Object.values(pos).map((p) => ({ x: p.x, y: p.y, w: nw, h: NH })),
+    ...stickies.map((s) => ({ x: clamp01(s.fx) * free, y: s.y, w: STICKY_W, h: STICKY_H })),
+  ]
+  const cols = Math.max(1, Math.floor(W / (STICKY_W + 16)))
+  for (let row = 0; row < 200; row++) {
+    for (let c = cols - 1; c >= 0; c--) { // right-hand side first: boxes fill from the left
+      const x = Math.min(free, c * (STICKY_W + 16)), y = row * (STICKY_H + 16)
+      if (!taken.some((t) => x < t.x + t.w + 8 && x + STICKY_W + 8 > t.x && y < t.y + t.h + 8 && y + STICKY_H + 8 > t.y)) return { fx: clamp01(x / free), y }
+    }
+  }
+  return { fx: 0, y: 0 }
+}
+
+/** Lowest edge of any floating note, so the canvas is tall enough to hold them. */
+export const stickiesBottom = (stickies: readonly { y: number }[]): number => stickies.reduce((m, s) => Math.max(m, s.y + STICKY_H), 0)

@@ -22,6 +22,11 @@ export interface PayloadMap {
   LevelSet: { level: Level }
   /** Full text of one contract block after an edit (debounced while typing, flushed on blur). Not board-undoable. */
   ContractNoteUpdated: { block: ContractBlock; text: string }
+  /** A floating note on the canvas. fx is the 0..1 horizontal fraction of the free width, y is pixels. */
+  StickyAdded: { id: string; fx: number; y: number; text: string }
+  StickyEdited: { id: string; text: string }
+  StickyMoved: { id: string; fx: number; y: number }
+  StickyDeleted: { id: string }
   EdgeLabeled: { id: string; label: string }
   NodeNoteUpdated: { id: string; text: string }
   /** targetSeq is the first seq of the undone action group (see undo.ts). */
@@ -73,7 +78,7 @@ export function append<K extends KnownType>(
   ts: number,
 ): LogEvent[] {
   const last = log[log.length - 1]
-  if (type === 'NodeMoved' && last && last.type === 'NodeMoved') {
+  if ((type === 'NodeMoved' || type === 'StickyMoved') && last && last.type === type) {
     const lp = last.payload as PayloadMap['NodeMoved']
     if (lp.id === (payload as PayloadMap['NodeMoved']).id && ts - last.ts < COALESCE_MS) {
       const merged = { seq: last.seq, ts, type, actor, payload } as KnownEvent

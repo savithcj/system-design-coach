@@ -21,6 +21,8 @@ export interface EdgeState {
   label?: string
 }
 
+export interface StickyState { id: string; fx: number; y: number; text: string }
+
 export type Contract = Record<ContractBlock, string>
 
 export interface State {
@@ -31,12 +33,14 @@ export interface State {
   contract: Contract
   nodes: NodeState[]
   edges: EdgeState[]
+  /** Floating notes on the canvas. The coach reads them like any other board text. */
+  stickies: StickyState[]
   finished: boolean
 }
 
 export const emptyContract = (): Contract => ({ functional: '', outofscope: '', nonfunctional: '', entities: '', api: '' })
 
-export const emptyState = (): State => ({ problemId: null, stage: 1, level: 'mid', contract: emptyContract(), nodes: [], edges: [], finished: false })
+export const emptyState = (): State => ({ problemId: null, stage: 1, level: 'mid', contract: emptyContract(), nodes: [], edges: [], stickies: [], finished: false })
 
 export function nodeName(s: State, id: string): string {
   return s.nodes.find((n) => n.id === id)?.label ?? '?'

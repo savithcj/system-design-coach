@@ -39,6 +39,7 @@ export function buildRequest(i: RequestInput): TurnRequest {
     board: {
       components: state.nodes.slice(0, MAX_COMPONENTS).map((n) => ({ name: n.label, category: roleLabel(n.role) })),
       links: state.edges.slice(0, MAX_LINKS).map((e): [string, string] => [nodeName(state, e.a), nodeName(state, e.b)]),
+      notes: state.stickies.slice(0, 6).map((x) => clip(x.text)),
     },
     violation: i.violation ? { id: i.violation.ruleId, summary: i.violation.summary, subjects: i.violation.subjects } : undefined,
     seed: i.seed,

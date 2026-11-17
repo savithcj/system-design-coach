@@ -31,11 +31,15 @@ function render(): void {
       : pf === 'NAME' ? document.getElementById('nameInp')
       : pf === 'EDGENAME' ? document.getElementById('edgeInp')
       : pf === 'NOTE' ? document.getElementById('noteInp')
+      : pf === 'STICKYINP' ? document.getElementById('stickyInp')
+      : pf === 'NOTEBTN' ? $('noteBtn')
+      : pf.startsWith('sticky:') ? document.querySelector<HTMLElement>(`[data-sticky="${pf.slice(7)}"]`)
       : pf.startsWith('edge:') ? document.querySelector<SVGElement>(`path[data-edge="${pf.slice(5)}"]`)
       : document.querySelector<HTMLElement>(`[data-node="${pf}"]`)
     if (f) {
       f.focus()
       if (pf === 'NAME' || pf === 'EDGENAME') (f as HTMLInputElement).select()
+      else if (pf === 'STICKYINP') (f as HTMLTextAreaElement).setSelectionRange((f as HTMLTextAreaElement).value.length, (f as HTMLTextAreaElement).value.length)
       else if (pf === 'NOTE') { const ta = f as HTMLTextAreaElement; ta.setSelectionRange(ta.value.length, ta.value.length) }
     }
     ui.pendingFocus = null

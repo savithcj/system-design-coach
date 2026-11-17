@@ -121,3 +121,8 @@ The model is optional and off by default. The scripted coach is always what runs
 
 ## Out of scope box
 - A visible "Out of scope" notes box sits under Functional (stage 1). The hidden "---" divider is still read for older sessions, but nothing tells the learner to use it any more; coach wording and hints point at the box. `scopeOf()` reads both. In the study guide the box's items join the Functional section's "Out of scope" list. Added at the owner's request; not in docs/02. The contract now has five blocks.
+
+## Floating notes
+- A "Note" button next to "+ Add component" adds a free text note anywhere on the canvas (new events `StickyAdded/Edited/Moved/Deleted`, all board-undoable, a drag is one coalesced event). Type, Enter saves, Shift+Enter adds a line, Escape or an empty note discards (nothing is recorded for an unsaved note). A saved note is a focusable button: Enter/F2 edits, arrows move (Shift for bigger steps), Delete removes, pointer drag moves it.
+- The coach reads them as board text: they count in the rules' text matching and go to the model as `board.notes`. They appear in replay, the narration, and the study guide (HTML and LaTeX, ASCII-safe); the Mermaid diagram ignores them.
+- Added at the owner's request; not in docs/02. Axe is clean in light and dark.

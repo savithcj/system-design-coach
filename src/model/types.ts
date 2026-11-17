@@ -12,7 +12,7 @@ export interface TurnRequest {
   stage: number
   move: MoveKind
   level: 1 | 2 | 3
-  board: { components: { name: string; category: string }[]; links: [string, string][] }
+  board: { components: { name: string; category: string }[]; links: [string, string][]; /** The learner's floating notes. */ notes: string[] }
   violation?: { id: string; summary: string; subjects: string[] }
   /** The scripted line for this move. The model rewords it; it does not add ideas. */
   seed: string

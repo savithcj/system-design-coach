@@ -213,3 +213,12 @@ path[data-edge]:focus-visible{stroke:var(--accent);stroke-opacity:.22}
 .spin{display:inline-block;width:28px;height:28px;border-radius:50%;border:3px solid var(--muted);border-top-color:transparent}
 @media (prefers-reduced-motion:no-preference){.spin{animation:spin 0.9s linear infinite}}
 @keyframes spin{to{transform:rotate(360deg)}}
+
+/* floating notes: a warm paper colour so they read as the learner's scribbles, not as design boxes */
+:root{--paper:#fff3bf;--paperline:#e8d27a}
+@media (prefers-color-scheme:dark){:root{--paper:#3a3317;--paperline:#6b5f2a}}
+.sticky,.stickyEdit{position:absolute;z-index:2;box-sizing:border-box;font:12px/1.45 ui-monospace,Menlo,Consolas,monospace;color:var(--ink);background:var(--paper);border:1px solid var(--paperline);border-radius:6px;padding:7px 9px;margin:0;text-align:left;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.sticky{cursor:grab;white-space:pre-wrap;overflow-wrap:anywhere;touch-action:none}
+.sticky:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.stickyEdit{z-index:3;resize:none;cursor:text;border-color:var(--accent)}
+.stickyEdit:focus-visible{outline:none;box-shadow:0 0 0 1px var(--accent)}

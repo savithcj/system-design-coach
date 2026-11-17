@@ -5,6 +5,7 @@ import type { EventLog, KnownEvent } from './events'
  */
 const UNDOABLE: ReadonlySet<string> = new Set([
   'NodeAdded', 'NodeMoved', 'NodeRenamed', 'NodeDeleted', 'EdgeAdded', 'EdgeDeleted', 'LayoutReset', 'EdgeLabeled', 'NodeNoteUpdated',
+  'StickyAdded', 'StickyEdited', 'StickyMoved', 'StickyDeleted',
 ])
 
 export const isUndoable = (e: { type: string; actor: string }): boolean => e.actor === 'user' && UNDOABLE.has(e.type)

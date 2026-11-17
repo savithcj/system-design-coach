@@ -1,5 +1,5 @@
 import { edgeLabelPoint, edgePath, NH } from '../core/geometry'
-import { canvasHeight, resolvePositions } from '../core/layout'
+import { STICKY_H, STICKY_W, canvasHeight, resolvePositions, stickiesBottom } from '../core/layout'
 import { reduceUpTo } from '../core/reduce'
 import { narrate, type Step } from '../core/report'
 import { STAGES } from '../core/stages'
@@ -13,7 +13,7 @@ const W = 640
 /** A read-only picture of a board: boxes, arrows, arrow labels. Boxes are as the learner placed them. */
 export function replaySvg(s: State): string {
   const { pos, nw } = resolvePositions(s.nodes, W)
-  const H = Math.max(canvasHeight(pos), NH + 8) + 8
+  const H = Math.max(canvasHeight(pos), NH + 8, stickiesBottom(s.stickies)) + 8
   const mk = (id: string) => `<marker id="${id}" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="12" markerHeight="12" markerUnits="userSpaceOnUse" orient="auto"><path d="M0.5,1 L10,5 L0.5,9 z" fill="var(--edge)"/></marker>`
   let edges = '', labels = ''
   for (const e of s.edges) {
@@ -31,7 +31,12 @@ export function replaySvg(s: State): string {
     return `<g transform="translate(${p.x} ${p.y})" style="color:var(--muted)">${shapeSvg(n.role, nw, NH)}` +
       `<text x="${nw / 2}" y="${NH / 2}" text-anchor="middle" dominant-baseline="central" style="fill:var(--ink);font-size:13px;font-weight:500">${esc(n.label.length > 22 ? n.label.slice(0, 21) + '…' : n.label)}</text></g>`
   }).join('')
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-height:340px" role="img" aria-label="Board with ${s.nodes.length} components and ${s.edges.length} connections"><defs>${mk('rpAh')}</defs>${edges}${boxes}${labels}</svg>`
+  const stickies = s.stickies.map((x) => {
+    const px = Math.min(1, Math.max(0, x.fx)) * Math.max(0, W - STICKY_W)
+    const t = x.text.replace(/\s+/g, ' ')
+    return `<g transform="translate(${px} ${x.y})"><rect width="${STICKY_W}" height="${STICKY_H}" rx="6" style="fill:var(--soft);stroke:var(--line2)"/><text x="8" y="18" style="fill:var(--ink);font-size:11px">${esc(t.length > 80 ? t.slice(0, 79) + '…' : t)}</text></g>`
+  }).join('')
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="max-height:340px" role="img" aria-label="Board with ${s.nodes.length} components, ${s.edges.length} connections and ${s.stickies.length} notes"><defs>${mk('rpAh')}</defs>${edges}${boxes}${labels}${stickies}</svg>`
 }
 
 interface View { root: HTMLElement; steps: Step[]; range: HTMLInputElement; cap: HTMLElement; board: HTMLElement; logRef: unknown; session: number }

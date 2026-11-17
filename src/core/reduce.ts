@@ -78,6 +78,24 @@ export function reduce(log: EventLog): State {
         for (const n of s.nodes) if (n.id === e.payload.id) { if (text.trim()) n.note = text; else delete n.note }
         break
       }
+      case 'StickyAdded': {
+        const p = e.payload
+        const text = (p.text ?? '').replace(/\s+$/, '')
+        if (!text.trim() || s.stickies.some((x) => x.id === p.id)) break
+        s.stickies.push({ id: p.id, fx: Math.min(1, Math.max(0, p.fx)), y: Math.max(0, p.y), text })
+        break
+      }
+      case 'StickyEdited': {
+        const text = e.payload.text.replace(/\s+$/, '')
+        for (const x of s.stickies) if (x.id === e.payload.id && text.trim()) x.text = text
+        break
+      }
+      case 'StickyMoved':
+        for (const x of s.stickies) if (x.id === e.payload.id) { x.fx = Math.min(1, Math.max(0, e.payload.fx)); x.y = Math.max(0, e.payload.y) }
+        break
+      case 'StickyDeleted':
+        s.stickies = s.stickies.filter((x) => x.id !== e.payload.id)
+        break
       case 'SessionFinished':
         s.finished = true
         break
