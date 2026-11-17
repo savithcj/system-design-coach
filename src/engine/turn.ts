@@ -9,7 +9,7 @@ import { checkReply, MAX_CHARS_L3 } from './grounding'
 import { historyOf, stageHasContent } from './history'
 import { nextNudge } from './nudge'
 import { ruleById } from './rules/registry'
-import { pointOrAdvance, scriptedText, stageDone, stageNudge } from './script'
+import { doneLines, pointOrAdvance, scriptedText, stageDone, stageNudge } from './script'
 import { selectMove, type CoachMove } from './selector'
 
 export type Trigger =
@@ -45,6 +45,18 @@ function repeatsClarifying(log: EventLog): boolean {
     return p.move === 'ask_clarifying' && !p.ruleId
   }
   return false
+}
+
+/** How many of the latest coach messages, uninterrupted, were one of these lines. */
+function trailingDoneLines(log: EventLog, lines: readonly string[]): number {
+  let n = 0
+  for (let i = log.length - 1; i >= 0; i--) {
+    const e = log[i]!
+    if (e.type !== 'CoachResponded') continue
+    if (!lines.includes((e.payload as PayloadMap['CoachResponded']).message)) break
+    n++
+  }
+  return n
 }
 
 /** A coach line a model may reword. The scripted `seed` is already in the planned event and stays if the model fails. */
@@ -100,9 +112,13 @@ export function planTurnFull(log: EventLog, problem: Problem, trigger: Trigger):
   // In chat the hint ladder stops at level 2. Once that has been said, say how to go further instead of repeating it (verbatim: a model drifts here).
   if (rule && trigger.kind === 'chat' && (history.spoken[move.ruleId!]?.level ?? 0) >= 2) { message = STRONGER; fixed = true }
   // "Ready to move on" and "this stage looks covered" are navigation, not coaching: a small model turned them into new questions.
-  if (!rule && move.kind === 'ask_clarifying' && stage <= 3 && stageDone(state, stage)) fixed = true
+  if (!rule && move.kind === 'ask_clarifying' && stage <= 3 && stageDone(state, stage)) {
+    fixed = true
+    const lines = doneLines(stage)
+    message = lines[Math.min(trailingDoneLines(log, lines), lines.length - 1)]!
+  }
   // Asking again without changing the board must not get the same line back.
-  if (!rule && move.kind === 'ask_clarifying' && trigger.kind !== 'stage' && repeatsClarifying(log)) message = pointOrAdvance(state, stage)
+  if (!rule && !fixed && move.kind === 'ask_clarifying' && trigger.kind !== 'stage' && repeatsClarifying(log)) message = pointOrAdvance(state, stage)
   const gate = checkReply({ message, state, problem, stage, ruleSpoilers: rule?.spoilers, allowRuleSpoilers: move.level === 3, maxChars: MAX_CHARS_L3 })
   // Level 3 is the answer itself: shown exactly as scripted, because rewording it is where it goes vague.
   if (gate.ok) { if (move.level !== 3 && !fixed) job = { index: -1, move, violation, stage, seed: message, ruleSpoilers: rule?.spoilers, allowRuleSpoilers: false } }

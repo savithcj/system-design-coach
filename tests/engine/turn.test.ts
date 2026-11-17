@@ -148,9 +148,12 @@ describe('chat follows what is already on the board', () => {
     expect(said(turn(b, { kind: 'chat' }, url))[0]).toMatch(/under Non-functional requirements on the left/) // the repeat names the empty box
     b.text('nonfunctional', 'redirect p99 under 100 ms')
     const done = said(turn(b, { kind: 'chat' }, url))[0]!
-    expect(done).toMatch(/filled in/)
+    expect(done).toMatch(/filled in. Choose Entities at the top/)
     expect(done).not.toMatch(/one thing a user must/)
-    expect(said(turn(b, { kind: 'chat' }, url))[0]).toMatch(/looks covered/)
+    const second = said(turn(b, { kind: 'chat' }, url))[0]!
+    expect(second).toMatch(/Nothing more is needed/)
+    expect(second).not.toBe(done)
+    expect(said(turn(b, { kind: 'chat' }, url))[0]).toMatch(/one click away/)
     // Both are navigation lines: shown as scripted, never handed to a model to reword.
     expect(planTurnFull(b.s.log, url, { kind: 'chat' }).job).toBeUndefined()
   })

@@ -40,6 +40,20 @@ export function stageDone(s: State, stage: number): boolean {
   }
 }
 
+/**
+ * What the coach says when a stage is written down and the learner keeps chatting. Moving on is the learner's click on the
+ * stage pill (chat is never read for intent), so each line says how, and they differ so the coach does not loop.
+ */
+export function doneLines(stage: number): string[] {
+  const next = STAGES[stage]?.label ?? 'the next stage'
+  const what = stage === 1 ? 'Your requirements' : stage === 2 ? 'Your entities' : 'Your calls'
+  return [
+    `${what} look filled in. Choose ${next} at the top when you are ready to move on.`,
+    `Nothing more is needed here. Choose ${next} at the top to carry on, or tell me which part you are unsure about.`,
+    `Take your time. ${next} is one click away at the top whenever you want it.`,
+  ]
+}
+
 /** What to say when asked and no rule is flagged: the first thing still missing in this stage, or that the stage looks covered. */
 export function stageNudge(s: State, stage: number): string | null {
   const has = (t: string) => t.trim() !== ''
@@ -47,16 +61,15 @@ export function stageNudge(s: State, stage: number): string | null {
     case 1:
       if (!has(s.contract.functional)) return NUDGE[1]!
       if (!has(s.contract.nonfunctional)) return 'Your features are down. Next, add the qualities the system must have under Non-functional requirements. What matters most here?'
-      return 'Your requirements look filled in. Ready to move on to the entities?'
-    case 2: return has(s.contract.entities) ? 'Your entities are listed. Ready to move on to the API?' : NUDGE[2]!
-    case 3: return has(s.contract.api) ? 'Your calls are listed. Ready to draw the high-level design?' : NUDGE[3]!
+      return doneLines(1)[0]!
+    case 2: return has(s.contract.entities) ? doneLines(2)[0]! : NUDGE[2]!
+    case 3: return has(s.contract.api) ? doneLines(3)[0]! : NUDGE[3]!
     default: return null
   }
 }
 
 /** Said instead of repeating when the learner asks again and nothing has changed. */
 export function pointOrAdvance(s: State, stage: number): string {
-  if (stageDone(s, stage)) return 'This stage looks covered. Pick the next stage whenever you are ready, or tell me which part you are unsure about.'
   // Name the box that is actually still empty, not just the first one of the stage.
   if (stage === 1 && s.contract.functional.trim() !== '') return 'I read your notes, not this chat. Could you add those as bullets under Non-functional requirements on the left?'
   return pointToNotes(stage)
