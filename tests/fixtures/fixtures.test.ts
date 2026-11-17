@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { parseLog, serializeLog } from '../../src/core/events'
 import { scriptedText } from '../../src/engine/script'
-import { loadFixtures, runFixture, type Fixture } from '../../evals/harness'
+import { fakeModel } from '../../src/model/fake'
+import { loadFixtures, runFixture, runFixtureWithModel, summarizeModel, type Fixture } from '../../evals/harness'
 
 const fixtures = loadFixtures()
 
@@ -60,5 +61,33 @@ describe('the harness catches real failures', () => {
     expect(leaky.ghosts).toBeGreaterThan(0)
     expect(leaky.c.some((x) => x.includes('forbidden "kafka"'))).toBe(true)
     expect(runFixture(base, scriptedText).c).toEqual([])
+  })
+})
+
+describe('layer C with a model: the numbers measure the model, and the gate keeps what is shown clean', () => {
+  const run = async (mode: Parameters<typeof fakeModel>[0], timeoutMs = 50) => {
+    const m = fakeModel(mode); await m.load(() => {})
+    return summarizeModel(await Promise.all(fixtures.map((f) => runFixtureWithModel(f, m, timeoutMs))))
+  }
+  it('a model that only rewords the seed scores 0% everywhere', async () => {
+    expect(await run('good')).toMatchObject({ rawSpoilerRate: 0, rawGhostRate: 0, rawOtherRate: 0, rawErrorRate: 0, shownBadRate: 0, fallbackRate: 0 })
+  })
+  it('a model that invents components is counted raw, but learners never see it', async () => {
+    const s = await run('ghost')
+    expect(s.rawGhostRate).toBe(100)
+    expect(s.shownBadRate).toBe(0)
+    expect(s.fallbackRate).toBe(100)
+  })
+  it('a model that leaks held-back terms is counted raw, and never shown', async () => {
+    const s = await run('spoiler')
+    expect(s.rawSpoilerRate).toBeGreaterThan(0)
+    expect(s.shownBadRate).toBe(0)
+  })
+  it('a model that hangs or returns garbage is an error rate, and the scripted line is shown', async () => {
+    for (const mode of ['hang', 'garbage'] as const) {
+      const s = await run(mode)
+      expect(s.rawErrorRate, mode).toBe(100)
+      expect(s.shownBadRate, mode).toBe(0)
+    }
   })
 })

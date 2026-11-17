@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Coach evals (dev only)</title>
+<style>
+  body{font:14px/1.5 system-ui,sans-serif;max-width:920px;margin:2rem auto;padding:0 16px;color:#18181b;background:#fff}
+  @media (prefers-color-scheme:dark){body{color:#e4e4e7;background:#18181b}}
+  table{border-collapse:collapse;width:100%} td,th{border-bottom:1px solid #8884;padding:4px 8px;text-align:left} .bad{color:#dc2626;font-weight:600}
+  code{background:#8882;padding:1px 4px;border-radius:4px}
+</style>
+</head>
+<body>
+<h1>Coach evals, layer C</h1>
+<p>Runs every fixture through a model and judges its raw replies with the grounding gate. Dev route only; it is not part of the production build.
+Choose the model with <code>?coach=local</code> (WebLLM, loads the pinned model), <code>?coach=local&amp;model=ID</code>, <code>?coach=fake-ghost</code> and so on, or nothing for the scripted coach.</p>
+<p id="status" role="status">Starting…</p>
+<div id="out"></div>
+<script type="module" src="/evals/page.ts"></script>
+</body>
+</html>
