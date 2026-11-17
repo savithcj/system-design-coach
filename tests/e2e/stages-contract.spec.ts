@@ -108,7 +108,8 @@ test.describe('contract notes', () => {
     expect((await noteEvents(page)).length).toBe(0) // still typing: nothing saved yet
     await page.waitForTimeout(700)
     expect((await noteEvents(page)).length).toBe(1)
-    expect((await events(page)).length).toBe(n0 + 1)
+    // The coach also records, a moment after the board is still, which rules started failing; those are not edits.
+    expect((await events(page)).filter((e) => !e.type.startsWith('Rule')).length).toBe(n0 + 1)
     await expect(note(page, 'functional')).toBeFocused()
     expect(await page.evaluate(() => (document.querySelector('[data-node]') as any).__mark)).toBe('same element')
     await page.keyboard.type('\n--- \npayments'.replace(' ', ''))

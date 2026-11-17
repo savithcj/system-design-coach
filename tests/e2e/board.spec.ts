@@ -177,12 +177,13 @@ test('problems switch and keep their own sessions; Start over clears one', async
   await expect(page.locator('#seg [data-id=rate]')).toHaveAttribute('aria-checked', 'true')
 })
 
-test('chat records the message; blank is ignored', async ({ page }) => {
+test('chat records the message and the coach answers; blank is ignored', async ({ page }) => {
   await page.fill('#chatInp', 'I think a limiter goes first'); await page.keyboard.press('Enter')
   await expect(page.locator('#coach .msg.you')).toContainText('limiter goes first')
   await expect(page.locator('#chatInp')).toHaveValue('')
+  await expect(page.locator('#coach .msg')).toHaveCount(3) // opening, the question, the coach's answer
   await page.fill('#chatInp', '   '); await page.keyboard.press('Enter')
-  await expect(page.locator('#coach .msg')).toHaveCount(2)
+  await expect(page.locator('#coach .msg')).toHaveCount(3)
 })
 
 test('splitter resizes with the keyboard', async ({ page }) => {
