@@ -18,12 +18,13 @@ import { rule as DD_SEARCH_PRIMARY_STORE } from './DD_SEARCH_PRIMARY_STORE'
 import { rule as DD_SURGE_NO_CHOKEPOINT } from './DD_SURGE_NO_CHOKEPOINT'
 import { rule as DD_LOCK_STORE_OUTAGE } from './DD_LOCK_STORE_OUTAGE'
 
-/** Stage order, then the order they are listed in docs/05. */
+/** Stage order, then the order they are listed in docs/05 (ties between rules are broken by this order). */
 export const RULES: readonly Rule[] = [
   REQ_TOO_MANY_FEATURES, REQ_NO_OUT_OF_SCOPE, REQ_VAGUE_NFR, REQ_CAP_UNSCOPED,
   ENT_PREMATURE_DETAIL,
   API_NO_COVERAGE, API_USER_ID_IN_BODY, API_SINGLE_STEP_BOOKING,
-  HLD_CLIENT_TO_DB, HLD_NO_ENTRY_POINT, HLD_UNFINISHED_PATH, HLD_PREMATURE_OPTIMISATION,
+  // Premature extras come before the unfinished route: with nothing connected yet, "why this now?" is the better question.
+  HLD_CLIENT_TO_DB, HLD_NO_ENTRY_POINT, HLD_PREMATURE_OPTIMISATION, HLD_UNFINISHED_PATH,
   DD_RESERVATION_NO_EXPIRY, DD_CRON_STALE_WINDOW, DD_SEARCH_FULL_SCAN, DD_SEARCH_PRIMARY_STORE, DD_SURGE_NO_CHOKEPOINT, DD_LOCK_STORE_OUTAGE,
 ]
 

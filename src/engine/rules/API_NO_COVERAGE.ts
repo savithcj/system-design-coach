@@ -7,9 +7,16 @@ export const rule: Rule = {
   applies: (s) => parseBlock(s.contract.api).inScope.length > 0 && parseBlock(s.contract.functional).inScope.length > 0,
   check(s) {
     const api = new Set(parseBlock(s.contract.api).inScope.flatMap((l) => [...nouns(l)]))
-    const missing = parseBlock(s.contract.functional).inScope.filter((l) => {
-      const n = nouns(l)
-      return n.size > 0 && ![...n].some((w) => api.has(w))
+    const reqs = parseBlock(s.contract.functional).inScope
+    // A noun shared by several requirements ("events") cannot show that one of them is covered, so lean on the
+    // nouns only this requirement uses; with none of those, any noun will do.
+    const counts = new Map<string, number>()
+    for (const l of reqs) for (const w of nouns(l)) counts.set(w, (counts.get(w) ?? 0) + 1)
+    const missing = reqs.filter((l) => {
+      const all = [...nouns(l)]
+      const own = all.filter((w) => counts.get(w) === 1)
+      const key = own.length ? own : all
+      return key.length > 0 && !key.some((w) => api.has(w))
     })
     if (!missing.length) return null
     return { evidence: missing.map((l) => shorten(l)), subjects: missing.slice(0, 2).map((l) => shorten(l, 40)),

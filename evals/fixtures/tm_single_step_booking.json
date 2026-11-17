@@ -1,0 +1,79 @@
+{
+ "id": "tm_single_step_booking",
+ "problem": "ticketmaster",
+ "stage": 3,
+ "events": [
+  {
+   "seq": 1,
+   "ts": 1700000004000,
+   "type": "ProblemLoaded",
+   "actor": "system",
+   "payload": {
+    "problemId": "ticketmaster"
+   }
+  },
+  {
+   "seq": 2,
+   "ts": 1700000008000,
+   "type": "ContractNoteUpdated",
+   "actor": "user",
+   "payload": {
+    "block": "functional",
+    "text": "search events\nview an event and its seat map\nbook a ticket\n---\npayments\nadmin tools\nrefunds\ndynamic pricing"
+   }
+  },
+  {
+   "seq": 3,
+   "ts": 1700000012000,
+   "type": "ContractNoteUpdated",
+   "actor": "user",
+   "payload": {
+    "block": "nonfunctional",
+    "text": "strong consistency for booking, no double sales\nhigh availability for search and browsing\nread-heavy: about 100 reads per booking\nhandles a surge: up to 10x in minutes"
+   }
+  },
+  {
+   "seq": 4,
+   "ts": 1700000016000,
+   "type": "ContractNoteUpdated",
+   "actor": "user",
+   "payload": {
+    "block": "entities",
+    "text": "Event\nVenue\nPerformer\nTicket\nBooking"
+   }
+  },
+  {
+   "seq": 5,
+   "ts": 1700000020000,
+   "type": "ContractNoteUpdated",
+   "actor": "user",
+   "payload": {
+    "block": "api",
+    "text": "GET /events?term= (search events)\nGET /events/{id} (view an event and its seat map)\nPOST /bookings (book a ticket)"
+   }
+  },
+  {
+   "seq": 6,
+   "ts": 1700000024000,
+   "type": "StageChanged",
+   "actor": "user",
+   "payload": {
+    "stage": 3
+   }
+  }
+ ],
+ "expect": {
+  "flags": [
+   "API_SINGLE_STEP_BOOKING"
+  ],
+  "move": "probe_bottleneck",
+  "moveAbout": [
+   "API_SINGLE_STEP_BOOKING"
+  ],
+  "forbiddenInReply": [
+   "reserve",
+   "confirm",
+   "hold"
+  ]
+ }
+}

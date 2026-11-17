@@ -1,0 +1,54 @@
+{
+ "id": "tm_requirements_valid_alternative",
+ "problem": "ticketmaster",
+ "stage": 1,
+ "events": [
+  {
+   "seq": 1,
+   "ts": 1700000004000,
+   "type": "ProblemLoaded",
+   "actor": "system",
+   "payload": {
+    "problemId": "ticketmaster"
+   }
+  },
+  {
+   "seq": 2,
+   "ts": 1700000008000,
+   "type": "ContractNoteUpdated",
+   "actor": "user",
+   "payload": {
+    "block": "functional",
+    "text": "search events\nview an event and its seat map\nbook a ticket\n---\npayments\nadmin tools\nrefunds\ndynamic pricing"
+   }
+  },
+  {
+   "seq": 3,
+   "ts": 1700000012000,
+   "type": "ContractNoteUpdated",
+   "actor": "user",
+   "payload": {
+    "block": "nonfunctional",
+    "text": "strong consistency for booking, no double sales\nhigh availability for search and browsing\nread-heavy: about 100 reads per booking\nhandles a surge: up to 10x in minutes"
+   }
+  },
+  {
+   "seq": 4,
+   "ts": 1700000016000,
+   "type": "StageChanged",
+   "actor": "user",
+   "payload": {
+    "stage": 1
+   }
+  }
+ ],
+ "expect": {
+  "flags": [],
+  "notFlags": [
+   "REQ_CAP_UNSCOPED",
+   "REQ_VAGUE_NFR",
+   "REQ_TOO_MANY_FEATURES"
+  ],
+  "move": "affirm_and_advance"
+ }
+}

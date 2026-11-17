@@ -1,0 +1,64 @@
+{
+ "id": "url_entity_detail",
+ "problem": "url",
+ "stage": 2,
+ "events": [
+  {
+   "seq": 1,
+   "ts": 1700000004000,
+   "type": "ProblemLoaded",
+   "actor": "system",
+   "payload": {
+    "problemId": "url"
+   }
+  },
+  {
+   "seq": 2,
+   "ts": 1700000008000,
+   "type": "ContractNoteUpdated",
+   "actor": "user",
+   "payload": {
+    "block": "functional",
+    "text": "shorten a link\nfollow a link\n---\naccounts"
+   }
+  },
+  {
+   "seq": 3,
+   "ts": 1700000012000,
+   "type": "ContractNoteUpdated",
+   "actor": "user",
+   "payload": {
+    "block": "nonfunctional",
+    "text": "redirect under 100 ms for most requests"
+   }
+  },
+  {
+   "seq": 4,
+   "ts": 1700000016000,
+   "type": "ContractNoteUpdated",
+   "actor": "user",
+   "payload": {
+    "block": "entities",
+    "text": "Link: code varchar(8), target text, created timestamp\nClick"
+   }
+  },
+  {
+   "seq": 5,
+   "ts": 1700000020000,
+   "type": "StageChanged",
+   "actor": "user",
+   "payload": {
+    "stage": 2
+   }
+  }
+ ],
+ "expect": {
+  "flags": [
+   "ENT_PREMATURE_DETAIL"
+  ],
+  "move": "challenge_assumption",
+  "moveAbout": [
+   "ENT_PREMATURE_DETAIL"
+  ]
+ }
+}

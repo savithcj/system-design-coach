@@ -1,0 +1,45 @@
+{
+ "id": "url_too_many_features",
+ "problem": "url",
+ "stage": 1,
+ "events": [
+  {
+   "seq": 1,
+   "ts": 1700000004000,
+   "type": "ProblemLoaded",
+   "actor": "system",
+   "payload": {
+    "problemId": "url"
+   }
+  },
+  {
+   "seq": 2,
+   "ts": 1700000008000,
+   "type": "ContractNoteUpdated",
+   "actor": "user",
+   "payload": {
+    "block": "functional",
+    "text": "shorten a link\nfollow a link\ncustom aliases\nlink expiry\nclick analytics\nuser accounts"
+   }
+  },
+  {
+   "seq": 3,
+   "ts": 1700000012000,
+   "type": "StageChanged",
+   "actor": "user",
+   "payload": {
+    "stage": 1
+   }
+  }
+ ],
+ "expect": {
+  "flags": [
+   "REQ_TOO_MANY_FEATURES",
+   "REQ_NO_OUT_OF_SCOPE"
+  ],
+  "move": "challenge_assumption",
+  "moveAbout": [
+   "REQ_TOO_MANY_FEATURES"
+  ]
+ }
+}

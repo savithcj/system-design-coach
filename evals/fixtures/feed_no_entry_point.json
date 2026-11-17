@@ -1,0 +1,158 @@
+{
+ "id": "feed_no_entry_point",
+ "problem": "feed",
+ "stage": 4,
+ "events": [
+  {
+   "seq": 1,
+   "ts": 1700000004000,
+   "type": "ProblemLoaded",
+   "actor": "system",
+   "payload": {
+    "problemId": "feed"
+   }
+  },
+  {
+   "seq": 2,
+   "ts": 1700000008000,
+   "type": "StageChanged",
+   "actor": "user",
+   "payload": {
+    "stage": 4
+   }
+  },
+  {
+   "seq": 3,
+   "ts": 1700000012000,
+   "type": "NodeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "n3",
+    "role": "client",
+    "label": "App",
+    "fx": 0.1,
+    "y": 0
+   }
+  },
+  {
+   "seq": 4,
+   "ts": 1700000016000,
+   "type": "NodeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "n4",
+    "role": "service",
+    "label": "Posting server",
+    "fx": 0.36666666666666664,
+    "y": 0
+   }
+  },
+  {
+   "seq": 5,
+   "ts": 1700000020000,
+   "type": "NodeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "n5",
+    "role": "service",
+    "label": "Reading server",
+    "fx": 0.6333333333333333,
+    "y": 0
+   }
+  },
+  {
+   "seq": 6,
+   "ts": 1700000024000,
+   "type": "NodeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "n6",
+    "role": "db",
+    "label": "Posts store",
+    "fx": 0.9,
+    "y": 0
+   }
+  },
+  {
+   "seq": 7,
+   "ts": 1700000028000,
+   "type": "NodeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "n7",
+    "role": "blob",
+    "label": "Image store",
+    "fx": 0.1,
+    "y": 108
+   }
+  },
+  {
+   "seq": 8,
+   "ts": 1700000032000,
+   "type": "EdgeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "e8",
+    "a": "n3",
+    "b": "n4"
+   }
+  },
+  {
+   "seq": 9,
+   "ts": 1700000036000,
+   "type": "EdgeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "e9",
+    "a": "n3",
+    "b": "n5"
+   }
+  },
+  {
+   "seq": 10,
+   "ts": 1700000040000,
+   "type": "EdgeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "e10",
+    "a": "n4",
+    "b": "n6"
+   }
+  },
+  {
+   "seq": 11,
+   "ts": 1700000044000,
+   "type": "EdgeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "e11",
+    "a": "n5",
+    "b": "n6"
+   }
+  },
+  {
+   "seq": 12,
+   "ts": 1700000048000,
+   "type": "EdgeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "e12",
+    "a": "n4",
+    "b": "n7"
+   }
+  }
+ ],
+ "expect": {
+  "flags": [
+   "HLD_NO_ENTRY_POINT"
+  ],
+  "move": "ask_clarifying",
+  "moveAbout": [
+   "HLD_NO_ENTRY_POINT"
+  ],
+  "forbiddenInReply": [
+   "load balancer",
+   "gateway"
+  ]
+ }
+}

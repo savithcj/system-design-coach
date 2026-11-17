@@ -3,7 +3,7 @@ import { byRole, chainConnected } from '../board'
 import type { Rule } from '../types'
 
 export const rule: Rule = {
-  id: 'HLD_PREMATURE_OPTIMISATION', stage: 4, severity: 'info', move: 'challenge_assumption', minLevel: 'mid',
+  id: 'HLD_PREMATURE_OPTIMISATION', stage: 4, severity: 'warn', move: 'challenge_assumption', minLevel: 'mid',
   applies: (s) => byRole(s, 'cache', 'queue').length > 0,
   check(s) {
     if (chainConnected(s, ['client', 'service', 'db'])) return null

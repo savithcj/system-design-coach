@@ -1,0 +1,323 @@
+{
+ "id": "tm_lock_outage_senior",
+ "problem": "ticketmaster",
+ "stage": 5,
+ "level": "senior",
+ "events": [
+  {
+   "seq": 1,
+   "ts": 1700000004000,
+   "type": "ProblemLoaded",
+   "actor": "system",
+   "payload": {
+    "problemId": "ticketmaster"
+   }
+  },
+  {
+   "seq": 2,
+   "ts": 1700000008000,
+   "type": "ContractNoteUpdated",
+   "actor": "user",
+   "payload": {
+    "block": "functional",
+    "text": "search events\nview an event and its seat map\nbook a ticket\n---\npayments\nadmin tools\nrefunds\ndynamic pricing"
+   }
+  },
+  {
+   "seq": 3,
+   "ts": 1700000012000,
+   "type": "ContractNoteUpdated",
+   "actor": "user",
+   "payload": {
+    "block": "nonfunctional",
+    "text": "strong consistency for booking, no double sales\nhigh availability for search and browsing\nread-heavy: about 100 reads per booking\nhandles a surge: up to 10x in minutes"
+   }
+  },
+  {
+   "seq": 4,
+   "ts": 1700000016000,
+   "type": "ContractNoteUpdated",
+   "actor": "user",
+   "payload": {
+    "block": "entities",
+    "text": "Event\nVenue\nPerformer\nTicket\nBooking"
+   }
+  },
+  {
+   "seq": 5,
+   "ts": 1700000020000,
+   "type": "ContractNoteUpdated",
+   "actor": "user",
+   "payload": {
+    "block": "api",
+    "text": "GET /events?term= (search events)\nGET /events/{id} (view an event and its seat map)\nPOST /events/{id}/tickets/reserve\nPOST /bookings/confirm"
+   }
+  },
+  {
+   "seq": 6,
+   "ts": 1700000024000,
+   "type": "StageChanged",
+   "actor": "user",
+   "payload": {
+    "stage": 5
+   }
+  },
+  {
+   "seq": 7,
+   "ts": 1700000028000,
+   "type": "NodeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "n7",
+    "role": "client",
+    "label": "Web app",
+    "fx": 0.1,
+    "y": 0
+   }
+  },
+  {
+   "seq": 8,
+   "ts": 1700000032000,
+   "type": "NodeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "n8",
+    "role": "service",
+    "label": "API gateway",
+    "fx": 0.36666666666666664,
+    "y": 0
+   }
+  },
+  {
+   "seq": 9,
+   "ts": 1700000036000,
+   "type": "NodeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "n9",
+    "role": "service",
+    "label": "Event service",
+    "fx": 0.6333333333333333,
+    "y": 0
+   }
+  },
+  {
+   "seq": 10,
+   "ts": 1700000040000,
+   "type": "NodeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "n10",
+    "role": "service",
+    "label": "Search service",
+    "fx": 0.9,
+    "y": 0
+   }
+  },
+  {
+   "seq": 11,
+   "ts": 1700000044000,
+   "type": "NodeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "n11",
+    "role": "service",
+    "label": "Booking service",
+    "fx": 0.1,
+    "y": 108
+   }
+  },
+  {
+   "seq": 12,
+   "ts": 1700000048000,
+   "type": "NodeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "n12",
+    "role": "db",
+    "label": "Postgres",
+    "fx": 0.36666666666666664,
+    "y": 108
+   }
+  },
+  {
+   "seq": 13,
+   "ts": 1700000052000,
+   "type": "NodeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "n13",
+    "role": "other",
+    "label": "Payment provider",
+    "fx": 0.6333333333333333,
+    "y": 108
+   }
+  },
+  {
+   "seq": 14,
+   "ts": 1700000056000,
+   "type": "EdgeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "e14",
+    "a": "n7",
+    "b": "n8"
+   }
+  },
+  {
+   "seq": 15,
+   "ts": 1700000060000,
+   "type": "EdgeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "e15",
+    "a": "n8",
+    "b": "n9"
+   }
+  },
+  {
+   "seq": 16,
+   "ts": 1700000064000,
+   "type": "EdgeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "e16",
+    "a": "n8",
+    "b": "n10"
+   }
+  },
+  {
+   "seq": 17,
+   "ts": 1700000068000,
+   "type": "EdgeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "e17",
+    "a": "n8",
+    "b": "n11"
+   }
+  },
+  {
+   "seq": 18,
+   "ts": 1700000072000,
+   "type": "EdgeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "e18",
+    "a": "n9",
+    "b": "n12"
+   }
+  },
+  {
+   "seq": 19,
+   "ts": 1700000076000,
+   "type": "EdgeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "e19",
+    "a": "n10",
+    "b": "n12"
+   }
+  },
+  {
+   "seq": 20,
+   "ts": 1700000080000,
+   "type": "EdgeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "e20",
+    "a": "n11",
+    "b": "n12"
+   }
+  },
+  {
+   "seq": 21,
+   "ts": 1700000084000,
+   "type": "EdgeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "e21",
+    "a": "n11",
+    "b": "n13"
+   }
+  },
+  {
+   "seq": 22,
+   "ts": 1700000088000,
+   "type": "NodeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "n22",
+    "role": "cache",
+    "label": "Redis",
+    "fx": 0.9,
+    "y": 108
+   }
+  },
+  {
+   "seq": 23,
+   "ts": 1700000092000,
+   "type": "NodeNoteUpdated",
+   "actor": "user",
+   "payload": {
+    "id": "n22",
+    "text": "seat reservation with TTL 10m"
+   }
+  },
+  {
+   "seq": 24,
+   "ts": 1700000096000,
+   "type": "EdgeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "e24",
+    "a": "n11",
+    "b": "n22"
+   }
+  },
+  {
+   "seq": 25,
+   "ts": 1700000100000,
+   "type": "NodeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "n25",
+    "role": "queue",
+    "label": "Waiting line",
+    "fx": 0.1,
+    "y": 216
+   }
+  },
+  {
+   "seq": 26,
+   "ts": 1700000104000,
+   "type": "EdgeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "e26",
+    "a": "n8",
+    "b": "n25"
+   }
+  },
+  {
+   "seq": 27,
+   "ts": 1700000108000,
+   "type": "EdgeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "e27",
+    "a": "n25",
+    "b": "n11"
+   }
+  }
+ ],
+ "expect": {
+  "flags": [
+   "DD_LOCK_STORE_OUTAGE"
+  ],
+  "move": "scale_curveball",
+  "moveAbout": [
+   "DD_LOCK_STORE_OUTAGE"
+  ]
+ }
+}

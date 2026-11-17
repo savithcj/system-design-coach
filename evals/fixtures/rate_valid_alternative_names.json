@@ -1,0 +1,168 @@
+{
+ "id": "rate_valid_alternative_names",
+ "problem": "rate",
+ "stage": 4,
+ "events": [
+  {
+   "seq": 1,
+   "ts": 1700000004000,
+   "type": "ProblemLoaded",
+   "actor": "system",
+   "payload": {
+    "problemId": "rate"
+   }
+  },
+  {
+   "seq": 2,
+   "ts": 1700000008000,
+   "type": "StageChanged",
+   "actor": "user",
+   "payload": {
+    "stage": 4
+   }
+  },
+  {
+   "seq": 3,
+   "ts": 1700000012000,
+   "type": "NodeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "n3",
+    "role": "client",
+    "label": "Partner app",
+    "fx": 0.1,
+    "y": 0
+   }
+  },
+  {
+   "seq": 4,
+   "ts": 1700000016000,
+   "type": "NodeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "n4",
+    "role": "service",
+    "label": "Envoy edge proxy",
+    "fx": 0.36666666666666664,
+    "y": 0
+   }
+  },
+  {
+   "seq": 5,
+   "ts": 1700000020000,
+   "type": "NodeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "n5",
+    "role": "service",
+    "label": "Limiter",
+    "fx": 0.6333333333333333,
+    "y": 0
+   }
+  },
+  {
+   "seq": 6,
+   "ts": 1700000024000,
+   "type": "NodeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "n6",
+    "role": "cache",
+    "label": "Redis counters",
+    "fx": 0.9,
+    "y": 0
+   }
+  },
+  {
+   "seq": 7,
+   "ts": 1700000028000,
+   "type": "NodeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "n7",
+    "role": "db",
+    "label": "Tier rules",
+    "fx": 0.1,
+    "y": 108
+   }
+  },
+  {
+   "seq": 8,
+   "ts": 1700000032000,
+   "type": "NodeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "n8",
+    "role": "service",
+    "label": "API fleet",
+    "fx": 0.36666666666666664,
+    "y": 108
+   }
+  },
+  {
+   "seq": 9,
+   "ts": 1700000036000,
+   "type": "EdgeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "e9",
+    "a": "n3",
+    "b": "n4"
+   }
+  },
+  {
+   "seq": 10,
+   "ts": 1700000040000,
+   "type": "EdgeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "e10",
+    "a": "n4",
+    "b": "n5"
+   }
+  },
+  {
+   "seq": 11,
+   "ts": 1700000044000,
+   "type": "EdgeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "e11",
+    "a": "n5",
+    "b": "n6"
+   }
+  },
+  {
+   "seq": 12,
+   "ts": 1700000048000,
+   "type": "EdgeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "e12",
+    "a": "n5",
+    "b": "n7"
+   }
+  },
+  {
+   "seq": 13,
+   "ts": 1700000052000,
+   "type": "EdgeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "e13",
+    "a": "n5",
+    "b": "n8"
+   }
+  }
+ ],
+ "expect": {
+  "flags": [],
+  "notFlags": [
+   "HLD_NO_ENTRY_POINT",
+   "HLD_UNFINISHED_PATH",
+   "HLD_PREMATURE_OPTIMISATION",
+   "HLD_CLIENT_TO_DB"
+  ],
+  "move": "affirm_and_advance"
+ }
+}

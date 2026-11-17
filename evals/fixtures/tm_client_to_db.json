@@ -1,0 +1,85 @@
+{
+ "id": "tm_client_to_db",
+ "problem": "ticketmaster",
+ "stage": 4,
+ "events": [
+  {
+   "seq": 1,
+   "ts": 1700000004000,
+   "type": "ProblemLoaded",
+   "actor": "system",
+   "payload": {
+    "problemId": "ticketmaster"
+   }
+  },
+  {
+   "seq": 2,
+   "ts": 1700000008000,
+   "type": "StageChanged",
+   "actor": "user",
+   "payload": {
+    "stage": 4
+   }
+  },
+  {
+   "seq": 3,
+   "ts": 1700000012000,
+   "type": "NodeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "n3",
+    "role": "client",
+    "label": "Web app",
+    "fx": 0.1,
+    "y": 0
+   }
+  },
+  {
+   "seq": 4,
+   "ts": 1700000016000,
+   "type": "NodeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "n4",
+    "role": "service",
+    "label": "Booking service",
+    "fx": 0.36666666666666664,
+    "y": 0
+   }
+  },
+  {
+   "seq": 5,
+   "ts": 1700000020000,
+   "type": "NodeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "n5",
+    "role": "db",
+    "label": "Postgres",
+    "fx": 0.6333333333333333,
+    "y": 0
+   }
+  },
+  {
+   "seq": 6,
+   "ts": 1700000024000,
+   "type": "EdgeAdded",
+   "actor": "user",
+   "payload": {
+    "id": "e6",
+    "a": "n3",
+    "b": "n5"
+   }
+  }
+ ],
+ "expect": {
+  "flags": [
+   "HLD_CLIENT_TO_DB",
+   "HLD_UNFINISHED_PATH"
+  ],
+  "move": "challenge_assumption",
+  "moveAbout": [
+   "HLD_CLIENT_TO_DB"
+  ]
+ }
+}

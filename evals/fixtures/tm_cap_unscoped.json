@@ -1,0 +1,56 @@
+{
+ "id": "tm_cap_unscoped",
+ "problem": "ticketmaster",
+ "stage": 1,
+ "events": [
+  {
+   "seq": 1,
+   "ts": 1700000004000,
+   "type": "ProblemLoaded",
+   "actor": "system",
+   "payload": {
+    "problemId": "ticketmaster"
+   }
+  },
+  {
+   "seq": 2,
+   "ts": 1700000008000,
+   "type": "ContractNoteUpdated",
+   "actor": "user",
+   "payload": {
+    "block": "functional",
+    "text": "search events\nview an event and its seat map\nbook a ticket\n---\npayments\nadmin tools\nrefunds\ndynamic pricing"
+   }
+  },
+  {
+   "seq": 3,
+   "ts": 1700000012000,
+   "type": "ContractNoteUpdated",
+   "actor": "user",
+   "payload": {
+    "block": "nonfunctional",
+    "text": "consistent and highly available\nread-heavy: about 100 reads per booking"
+   }
+  },
+  {
+   "seq": 4,
+   "ts": 1700000016000,
+   "type": "StageChanged",
+   "actor": "user",
+   "payload": {
+    "stage": 1
+   }
+  }
+ ],
+ "expect": {
+  "flags": [
+   "REQ_VAGUE_NFR",
+   "REQ_CAP_UNSCOPED"
+  ],
+  "move": "ask_clarifying",
+  "moveAbout": [
+   "REQ_VAGUE_NFR",
+   "REQ_CAP_UNSCOPED"
+  ]
+ }
+}
