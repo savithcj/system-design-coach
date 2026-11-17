@@ -32,6 +32,9 @@ export async function coachTurn(trigger: Trigger, learnerMessage?: string): Prom
       const raw = await interpretChat(model, buildInterpretRequest(before, getLog(), learnerMessage, problem.title), timeoutMs())
       const via = `chat:${getLog()[getLog().length - 1]!.seq}`
       const plan = planChatEdits(raw, learnerMessage, before, via, Math.max(260, document.getElementById('boardCol')?.clientWidth ?? 800))
+      // Rejections go in the log (never shown) so evals and the dev console can see what the model proposed and why it was refused.
+      if (plan.rejected.length) record('CoachReplyRejected', { reason: `chat-edit:${[...new Set(plan.rejected)].join(',')}`, move: 'chat_edit' }, 'system')
+      if (import.meta.env.DEV) (window as unknown as { __chatEdit?: unknown }).__chatEdit = { message: learnerMessage, raw, rejected: plan.rejected, applied: plan.summary }
       if (plan.events.length) {
         for (const e of plan.events) record(e.type, e.payload, 'coach')
         const first = !getLog().some((e) => e.type === 'CoachResponded' && (e.payload as { move?: string }).move === 'chat_edit')

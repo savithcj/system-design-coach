@@ -140,3 +140,5 @@ The model is optional and off by default. The scripted coach is always what runs
 - Without the model (no WebGPU, failed load) chat cannot change the board; the scripted coach still works as before.
 - The model now also sees the text of the notes boxes. CLAUDE.md hard rules 2 and 4 were rewritten for this.
 - Not yet: renaming, deleting, moving, editing existing bullets by chat.
+- Found by driving the real model in Chrome: a compound request ("add a web app and an api server and connect them") first produced one action; the prompt now says one action per separate thing, with a multi-action example. The model also gave "API server" the Database category; `roleFor` lets a component's own name (server, cache, queue, database, client words) settle its category. Rejected actions are logged as `CoachReplyRejected` (`chat-edit:<reasons>`), and in dev `window.__chatEdit` shows the last proposal.
+- Verified with Llama 3.2 3B: requirement sentence → two bullets under Functional; "idk" → nothing; compound request → Client + Server + arrow; one Cmd/Ctrl+Z reverts a whole message.

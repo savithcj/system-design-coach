@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { reduce } from '../../src/core/reduce'
 import { undoView } from '../../src/core/undo'
-import { fromLearner, planChatEdits, type RawAction } from '../../src/engine/chatEdit'
+import { fromLearner, planChatEdits, roleFor, type RawAction } from '../../src/engine/chatEdit'
 import { Session } from '../core/helpers'
 
 const run = (s: Session, message: string, raw: RawAction[], via = 'chat:9') => planChatEdits(raw, message, s.state, via, 900)
@@ -48,6 +48,16 @@ describe('writing into notes boxes', () => {
     const p = run(s, 'also tickets', [{ kind: 'write', block: 'entities', bullets: ['tickets'] }])
     apply(s, p)
     expect(s.state.contract.entities).toBe('• event\n• tickets')
+  })
+})
+
+describe('the name settles the category', () => {
+  it('corrects a wrong category when the name clearly says otherwise', () => {
+    expect(roleFor('API server', 'db')).toBe('service')
+    expect(roleFor('Redis', 'service')).toBe('cache')
+    expect(roleFor('Web app', 'service')).toBe('client')
+    expect(roleFor('Orders', 'db')).toBe('db') // says nothing: keep the model's choice
+    expect(roleFor('Postgres', 'db')).toBe('db')
   })
 })
 

@@ -49,12 +49,13 @@ export function parseReply(raw: string): { message: string; aboutRuleId?: string
 
 export const INTERPRET_PROMPT = `You turn a learner's chat message into edits of their design workspace.
 The workspace has note boxes (functional, outofscope, nonfunctional, entities, api), components (category client, service, cache, db, blob, queue or other) and arrows between components, plus floating notes.
-Output actions only for design content the learner states or asks for: an answer to the coach's last question, a requirement, an entity, an API call, a component to add, an arrow to draw, or a note to keep. Copy their own words. Add nothing of your own.
+Output actions only for design content the learner states or asks for: an answer to the coach's last question, a requirement, an entity, an API call, a component to add, an arrow to draw, or a note to keep. Copy their own words. Add nothing of your own. One message can need several actions: output one action for every separate thing they ask for, in the order they say it.
 Choose the box that fits: stage 1 is functional, outofscope or nonfunctional; stage 2 is entities; stage 3 is api.
 Output no actions for questions, "idk", greetings, thanks, or asking the coach to tell or explain something.
 Examples:
 "users paste a url and get a short one back" -> {"actions":[{"kind":"write","block":"functional","bullets":["paste a url","get a short one back"]}]}
 "add a redis cache" -> {"actions":[{"kind":"add_component","category":"cache","label":"Redis"}]}
+"add a web app and a postgres database and connect them" -> {"actions":[{"kind":"add_component","category":"client","label":"Web app"},{"kind":"add_component","category":"db","label":"Postgres"},{"kind":"connect","from":"Web app","to":"Postgres"}]}
 "connect web app to api server" -> {"actions":[{"kind":"connect","from":"Web app","to":"API server"}]}
 "idk, what should I add?" -> {"actions":[]}
 Reply with JSON only.`

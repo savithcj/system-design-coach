@@ -58,6 +58,25 @@ const norm = (s: string): string => words(s).join(' ')
 const clean = (s: unknown): string => (typeof s === 'string' ? s.replace(/^[\s•\-*\d.)]+/, '').replace(/\s+/g, ' ').trim() : '')
 const isRole = (c: unknown): c is Role => typeof c === 'string' && (ROLE_ORDER as readonly string[]).includes(c)
 
+/**
+ * Words in a component's own name that settle its category. A small model often picks the wrong category for a correct name
+ * (it called "API server" a database), so the name wins when it clearly points somewhere else.
+ */
+const ROLE_WORDS: Readonly<Partial<Record<Role, readonly string[]>>> = {
+  client: ['client', 'app', 'browser', 'phone', 'mobile', 'web', 'frontend', 'user'],
+  service: ['server', 'service', 'api', 'gateway', 'balancer', 'worker', 'backend', 'proxy'],
+  cache: ['cache', 'redis', 'memcached', 'cdn'],
+  db: ['database', 'db', 'sql', 'postgres', 'mysql', 'mongo', 'mongodb', 'dynamodb', 'cassandra'],
+  blob: ['storage', 's3', 'bucket', 'blob', 'files'],
+  queue: ['queue', 'kafka', 'sqs', 'rabbitmq', 'pubsub'],
+}
+/** The category the name points to, or the proposed one when the name says nothing (or already agrees). */
+export function roleFor(label: string, proposed: Role): Role {
+  const w = new Set(words(label))
+  const evident = (Object.keys(ROLE_WORDS) as Role[]).filter((r) => ROLE_WORDS[r]!.some((x) => w.has(x)))
+  return evident.length && !evident.includes(proposed) ? evident[0]! : proposed
+}
+
 /** Maps a model's loose category word ("database", "server") to a category, or null. */
 function roleOf(c: unknown): Role | null {
   if (isRole(c)) return c
@@ -94,7 +113,7 @@ export function planChatEdits(raw: readonly RawAction[], message: string, state:
       plan.events.push({ type: 'ContractNoteUpdated', payload: { block, text: text[block], via }, actor: 'coach' })
       for (const l of add) plan.summary.push(`Added “${l}” under ${CONTRACT_TITLES[block]}.`)
     } else if (a.kind === 'add_component') {
-      const role = roleOf(a.category)
+      let role = roleOf(a.category)
       if (!role) { refuse('unknown-category'); continue }
       const asked = clean(a.label).slice(0, 40)
       // The category must be what the learner named, or the label must be their own word.
@@ -104,6 +123,7 @@ export function planChatEdits(raw: readonly RawAction[], message: string, state:
       if (nodes.some((x) => norm(x.label) === norm(label))) { refuse('component-exists'); continue }
       const slot = freeSlot(nodes, boardW)
       const nid = id('n')
+      role = roleFor(label, role)
       nodes.push({ id: nid, role, label, fx: slot.fx, y: slot.y })
       plan.events.push({ type: 'NodeAdded', payload: { id: nid, role, label, fx: slot.fx, y: slot.y, via }, actor: 'coach' })
       plan.summary.push(`Added ${label} (${roleLabel(role)}).`)
