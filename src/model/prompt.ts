@@ -17,7 +17,7 @@ Rules:
 
 Reply with JSON only: {"message": string, "aboutRuleId": string}. Use the violation id for aboutRuleId when there is one, otherwise an empty string.`
 
-const STRICT = `Your previous reply was rejected. Stay very close to the seed's own wording and introduce no new term at all.`
+const STRICT = `Your previous reply was rejected. Stay very close to the seed's own wording, introduce no new term at all, and do not copy any earlier line from lastTurns.`
 
 export const REPLY_SCHEMA = {
   type: 'object',

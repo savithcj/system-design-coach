@@ -2,6 +2,7 @@
 import { STAGES } from '../core/stages'
 import type { CoachMove } from './selector'
 import { ruleById } from './rules/registry'
+import type { State } from '../core/state'
 import type { Violation } from './types'
 
 const NUDGE: Record<number, string> = {
@@ -27,6 +28,39 @@ const POINT: Record<number, string> = {
   3: 'I read your notes, not this chat. Could you add those as bullets under API and data flow on the left?',
 }
 export const pointToNotes = (stage: number): string => POINT[stage] ?? 'I read the board, not this chat. Which part of it could show that?'
+
+/** True when everything the learner is asked for in stages 1-3 is written down. Stages 4 and 5 live on the board. */
+export function stageDone(s: State, stage: number): boolean {
+  const has = (t: string) => t.trim() !== ''
+  switch (stage) {
+    case 1: return has(s.contract.functional) && has(s.contract.nonfunctional)
+    case 2: return has(s.contract.entities)
+    case 3: return has(s.contract.api)
+    default: return false
+  }
+}
+
+/** What to say when asked and no rule is flagged: the first thing still missing in this stage, or that the stage looks covered. */
+export function stageNudge(s: State, stage: number): string | null {
+  const has = (t: string) => t.trim() !== ''
+  switch (stage) {
+    case 1:
+      if (!has(s.contract.functional)) return NUDGE[1]!
+      if (!has(s.contract.nonfunctional)) return 'Your features are down. Next, add the qualities the system must have under Non-functional requirements. What matters most here?'
+      return 'Your requirements look filled in. Ready to move on to the entities?'
+    case 2: return has(s.contract.entities) ? 'Your entities are listed. Ready to move on to the API?' : NUDGE[2]!
+    case 3: return has(s.contract.api) ? 'Your calls are listed. Ready to draw the high-level design?' : NUDGE[3]!
+    default: return null
+  }
+}
+
+/** Said instead of repeating when the learner asks again and nothing has changed. */
+export function pointOrAdvance(s: State, stage: number): string {
+  if (stageDone(s, stage)) return 'This stage looks covered. Pick the next stage whenever you are ready, or tell me which part you are unsure about.'
+  // Name the box that is actually still empty, not just the first one of the stage.
+  if (stage === 1 && s.contract.functional.trim() !== '') return 'I read your notes, not this chat. Could you add those as bullets under Non-functional requirements on the left?'
+  return pointToNotes(stage)
+}
 
 /** The text a learner reads for a move. `violation` is the one the move is about, if any. */
 export function scriptedText(move: CoachMove, violation: Violation | undefined, stage: number, nudge?: string | null): string {

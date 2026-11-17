@@ -29,6 +29,21 @@ export interface Phrased {
   rejections: string[]
 }
 
+const norm = (s: string): string => s.toLowerCase().replace(/[^a-z0-9 ]+/g, ' ').replace(/\s+/g, ' ').trim()
+const bigWords = (s: string): Set<string> => new Set(norm(s).split(' ').filter((w) => w.length >= 5))
+
+/**
+ * Two cheap checks the model cannot talk its way past: it must not say a line the coach already said, and it must stay on
+ * the seed's subject (share at least one longer word with it). A small model that copies an earlier turn fails the first.
+ */
+export function offTrack(message: string, req: TurnRequest): 'repeat' | 'drift' | null {
+  const n = norm(message)
+  if (req.lastTurns.some((t) => t.who === 'coach' && norm(t.text) === n)) return 'repeat'
+  const seed = bigWords(req.seed)
+  if (seed.size) { const m = bigWords(message); if (![...seed].some((w) => m.has(w))) return 'drift' }
+  return null
+}
+
 export class ModelTimeout extends Error {}
 
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
@@ -59,13 +74,15 @@ export async function phraseWithModel(model: CoachModel, req: TurnRequest, ctx: 
   for (const strict of [false, true]) {
     const r = await attempt(model, req, strict, ms)
     if (r.message !== undefined) {
+      // Safety first (spoilers, invented components, shape), then the two usefulness checks.
       const gate = checkReply({
         message: r.message, state: ctx.state, problem: ctx.problem, stage: ctx.stage,
         ruleSpoilers: ctx.ruleSpoilers, allowRuleSpoilers: ctx.allowRuleSpoilers,
         maxChars: req.level === 3 ? MAX_CHARS_L3 : MAX_CHARS,
       })
-      if (gate.ok) return { message: r.message, by: model.id, rejections }
-      rejections.push(gate.reasons.join(','))
+      const off = gate.ok ? offTrack(r.message, req) : null
+      if (gate.ok && !off) return { message: r.message, by: model.id, rejections }
+      rejections.push(gate.ok ? off! : gate.reasons.join(','))
     } else rejections.push(r.reason!)
     // A hang or crash will not improve on retry: do not make the learner wait twice.
     if (r.reason === 'model:timeout') break

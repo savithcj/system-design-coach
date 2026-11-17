@@ -127,3 +127,8 @@ The model is optional and off by default. The scripted coach is always what runs
 - The coach reads them as board text: they count in the rules' text matching and go to the model as `board.notes`. They appear in replay, the narration, and the study guide (HTML and LaTeX, ASCII-safe); the Mermaid diagram ignores them.
 - Added at the owner's request; not in docs/02. Axe is clean in light and dark.
 - Notes are plain text on the canvas with no box (like free text in a drawing tool): a faint outline shows only on hover, focus and while editing, and the editor grows with its text.
+
+## Chat follows the board (second round of real-model fixes)
+- With no rule flagged, the coach's chat fallback now reads the board: stage 1 names the first empty box (Functional, then Non-functional), says "requirements look filled in, ready to move on?" when both are written, and "this stage looks covered" on a further ask. Stages 2 and 3 do the same for Core entities and API. A repeated ask names the box that is still empty, not just the first. The last mention of the "---" divider in hint wording is gone.
+- "Ready to move on" and "looks covered" lines are shown exactly as scripted, not reworded.
+- Two model-independent checks before any model line is shown: it must not repeat a line the coach already said, and it must share at least one longer word with the scripted seed. A failure gets one stricter retry, then the scripted line. Found in real Chrome: the 3B model copied the previous coach line three times in a row.

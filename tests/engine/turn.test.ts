@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { reduce } from '../../src/core/reduce'
-import { planTurn, CONFIRM_TEXT, type Trigger } from '../../src/engine/turn'
+import { planTurn, planTurnFull, CONFIRM_TEXT, type Trigger } from '../../src/engine/turn'
 import { problemById } from '../../src/problems'
 import { board, type B } from './helpers'
 
@@ -30,7 +30,7 @@ describe('"Stuck?"', () => {
     expect(said(ask)).toEqual([CONFIRM_TEXT])
     const l3 = turn(b, { kind: 'stuck' })
     expect(l3[0]!.payload).toMatchObject({ level: 3, ruleId: 'REQ_TOO_MANY_FEATURES' })
-    expect(said(l3)[0]).toMatch(/"---"/)
+    expect(said(l3)[0]).toMatch(/Out of scope box/)
   })
 
   it('an edit between the question and the second press cancels the confirmation', () => {
@@ -137,5 +137,21 @@ describe('asking again with nothing changed', () => {
     const log = b.s.log.map((e) => (e.type === 'CoachResponded' ? { ...e, payload: { ...(e.payload as object), message: 'reworded' } } : e))
     const again = planTurn(log as never, url, { kind: 'chat' }).find((p) => p.type === 'CoachResponded')!.payload as { message: string }
     expect(again.message).toBe(second[0])
+  })
+})
+
+describe('chat follows what is already on the board', () => {
+  it('names the next missing piece, then says the stage looks covered, and never asks for what is written', () => {
+    const b = board()
+    b.text('functional', 'input a url\nget a short one'); b.text('outofscope', 'user accounts')
+    expect(said(turn(b, { kind: 'chat' }, url))[0]).toMatch(/Non-functional requirements/)
+    expect(said(turn(b, { kind: 'chat' }, url))[0]).toMatch(/under Non-functional requirements on the left/) // the repeat names the empty box
+    b.text('nonfunctional', 'redirect p99 under 100 ms')
+    const done = said(turn(b, { kind: 'chat' }, url))[0]!
+    expect(done).toMatch(/filled in/)
+    expect(done).not.toMatch(/one thing a user must/)
+    expect(said(turn(b, { kind: 'chat' }, url))[0]).toMatch(/looks covered/)
+    // Both are navigation lines: shown as scripted, never handed to a model to reword.
+    expect(planTurnFull(b.s.log, url, { kind: 'chat' }).job).toBeUndefined()
   })
 })

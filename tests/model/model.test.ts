@@ -111,7 +111,7 @@ describe('phrasing with a model, behind the gate', () => {
 
   it('the rule\'s own solution terms pass only for a confirmed level 3', async () => {
     const s = scenario()
-    const leaky: CoachModel = { id: 'leaky', status: () => 'ready', load: async () => {}, phrase: async (): Promise<TurnReply> => ({ message: 'Give each hold a deadline using a timeout.' }) }
+    const leaky: CoachModel = { id: 'leaky', status: () => 'ready', load: async () => {}, phrase: async (): Promise<TurnReply> => ({ message: 'Pick fewer features first: give each hold a deadline using a timeout.' }) }
     const l1 = await phraseWithModel(leaky, s.req, { ...s.ctx, ruleSpoilers: ['timeout'] })
     expect(l1.by).toBe('scripted')
     const l3 = await phraseWithModel(leaky, { ...s.req, level: 3 }, { ...s.ctx, ruleSpoilers: ['timeout'], allowRuleSpoilers: true })
@@ -146,5 +146,31 @@ describe('the plan marks what a model may reword', () => {
     for (const e of first.events) b.s.add(e.type, e.payload, e.actor)
     for (const e of planTurnFull(b.s.log, tm, { kind: 'stuck' }).events) b.s.add(e.type, e.payload, e.actor) // level 2
     expect(planTurnFull(b.s.log, tm, { kind: 'stuck' }).job).toBeUndefined() // the confirmation question
+  })
+})
+
+describe('a model that ignores its seed', () => {
+  const says = (text: string): CoachModel => ({ id: 'says', status: () => 'ready', load: async () => {}, phrase: async (): Promise<TurnReply> => ({ message: text }) })
+
+  it('is not shown when it repeats a line the coach already said', async () => {
+    const { req, ctx, seed } = scenario()
+    const earlier = 'What would you say is the biggest quality of this system?'
+    const withTurns = { ...req, lastTurns: [{ who: 'coach' as const, text: earlier }] }
+    const r = await phraseWithModel(says(earlier), withTurns, ctx)
+    expect(r.by).toBe('scripted'); expect(r.message).toBe(seed)
+    expect(r.rejections).toEqual(['repeat', 'repeat'])
+  })
+
+  it('is not shown when it talks about something else than the seed', async () => {
+    const { req, ctx, seed } = scenario()
+    const r = await phraseWithModel(says('How do you feel about databases today?'), req, ctx)
+    expect(r.by).toBe('scripted'); expect(r.message).toBe(seed)
+    expect(r.rejections[0]).toBe('drift')
+  })
+
+  it('a faithful rewording still gets through', async () => {
+    const { req, ctx } = scenario()
+    const r = await phraseWithModel(says('Which features would you drop first, to keep the design small?'), req, ctx)
+    expect(r.by).toBe('says')
   })
 })
