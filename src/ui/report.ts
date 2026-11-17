@@ -1,6 +1,7 @@
 import { buildReport, renderHtml, renderLatex } from '../core/report'
 import { $ } from './dom'
 import { copyText } from './details'
+import { refreshReplay } from './replay'
 import { getLog, render, ui } from './store'
 
 /** Mermaid is bundled but loaded only when a report is opened, so the board stays light. */
@@ -17,6 +18,7 @@ async function drawMermaid(el: HTMLElement | null, code: string): Promise<void> 
 }
 
 export function renderReport(): void {
+  refreshReplay($('replayReport'))
   const r = buildReport(getLog())
   $('reportBody').innerHTML = renderHtml(r)
   $<HTMLTextAreaElement>('texSrc').value = renderLatex(r)

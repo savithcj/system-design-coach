@@ -51,6 +51,7 @@
     <div id="reportView" class="report" hidden>
       <div class="rbar"><button id="backBtn" class="btn ghost">&larr; Back to design</button><span class="grow"></span><button id="copyTex" class="btn solid">Copy LaTeX</button></div>
       <h2 id="reportH" tabindex="-1" class="sr">Your study guide</h2>
+      <div id="replayReport" class="replay"></div>
       <div id="reportBody"></div>
       <details id="texDetails" class="plain"><summary>LaTeX source</summary><textarea id="texSrc" class="out" readonly aria-label="LaTeX source"></textarea></details>
     </div>
@@ -61,6 +62,8 @@
   <div class="dhead"><h2 id="detTitle">Details</h2><button id="detClose" class="btn ghost">Close</button></div>
   <h3>Board as Mermaid</h3>
   <pre id="mmSrc" tabindex="0"></pre>
+  <h3>Replay</h3>
+  <div id="replayDetails" class="replay"></div>
   <h3>Event log</h3>
   <pre id="evLog" tabindex="0"></pre>
   <div class="row"><label for="levelSel">Coach level</label><select id="levelSel"><option value="mid">Mid</option><option value="senior">Senior</option><option value="staff">Staff</option></select></div>

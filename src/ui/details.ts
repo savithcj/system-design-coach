@@ -2,10 +2,12 @@ import { serializeLog } from '../core/events'
 import { boardMermaid } from '../core/mermaid'
 import type { State } from '../core/state'
 import { $, say } from './dom'
+import { refreshReplay } from './replay'
 import { isLevel } from '../core/level'
 import { dispatch, getLog, loadProblem, currentProblemId } from './store'
 
 export function renderDetails(s: State): void {
+  if ((document.getElementById('detailsDlg') as HTMLDialogElement | null)?.open) refreshReplay($('replayDetails'))
   $('mmSrc').textContent = s.nodes.length ? boardMermaid(s) : '(empty board)'
   $<HTMLSelectElement>('levelSel').value = s.level
   $('evLog').textContent = getLog().map((e) => JSON.stringify({ seq: e.seq, actor: e.actor, type: e.type, payload: e.payload })).join('\n')
@@ -25,7 +27,7 @@ export function copyText(text: string, btn: HTMLElement, fallback: HTMLTextAreaE
 export function initDetails(): void {
   const dlg = $<HTMLDialogElement>('detailsDlg')
   const close = () => { if (dlg.close) dlg.close(); else dlg.removeAttribute('open') }
-  $('detailsBtn').onclick = () => { if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', '') }
+  $('detailsBtn').onclick = () => { if (dlg.showModal) dlg.showModal(); else dlg.setAttribute('open', ''); refreshReplay($('replayDetails')) }
   $('detClose').onclick = close
   $<HTMLSelectElement>('levelSel').onchange = (e) => {
     const level = (e.target as HTMLSelectElement).value
